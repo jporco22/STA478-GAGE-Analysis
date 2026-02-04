@@ -166,3 +166,21 @@ example_fit<- cfa(example_model, data=reduced_df)
 summary(example_fit, fit.measures=T)
 
 #test_efa<-efa(data=reduced_df)
+
+#First test:
+
+first_cfa<- 'socialself=~ cr_mva_se_solve +cr_mva_se_means+ cr_mva_se_goal+
+                          cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
+                          cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+ 
+                          cr_mva_se_handle
+              socialworld=~ cr_si_peopletrusted+ cr_si_peoplehelp+
+                          cr_si_threaten+ cr_si_othersthreaten
+              socialsafetythreat=~ cr_si_togetherness+ cr_vi_peer_times1+
+                          cr_vi_peer_times2+cr_vi_peer_times3+
+                          cr_vi_peer_times4+ cr_vi_peer_times5+
+                          cr_vi_peer_times6
+              nonsocialsafetythreat=~cr_edu_trvlsafe'
+first_cfa_fit<- cfa(first_cfa, data=reduced_df)
+summary(first_cfa_fit,fit.measures=T)
+
+head(table_1_3_sst$cr_rc_friendsupp)
