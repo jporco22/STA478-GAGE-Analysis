@@ -154,7 +154,7 @@ table_1_3_crportion<- gage_baseline18 %>%
          cr_si_oftpart4,cr_si_oftpart5,
          cr_rc_friendsupp,
          cr_rc_friendtimes)
-table_1_3_sst<- inner_join(table_1_3_cr,table_1_3_violence, by="hhid")
+table_1_3_sst<- inner_join(table_1_3_crportion,table_1_3_violenceportion, by="hhid")
 #add in columns to summarize group/activity participation data:
 #exclude group #4 (JHOUD Amira Bassma centre) due to NA values
 table_1_3_sst<- table_1_3_sst %>% 
@@ -313,7 +313,7 @@ table_3_edueco<- gage_baseline18 %>%
 table_4_resi <- gage_baseline18 %>% select(hhid, contains("cr_rc"))
 #add in cyrm column:(note, negative values mean at least one question was not answered)
 table_4_resi$cr_rc_cyrm<-rowSums(table_4_resi)- table_4_resi$hhid
-table(table_4_resi$cr_rc_cyrm,useNA='ifany')
+
 
 # table 5: outcomes and treatment
 table_5_outcomes<- gage_baseline18 %>%
@@ -393,4 +393,29 @@ second_cfa_fit<-cfa(second_cfa,data=reduced_df,ordered=ordered_cols_list,
 summary(second_cfa_fit,fit.measures=T)
 
 
-class(reduced_df$cr_mva_opin_sum_REV)
+####3rd attempt: (remove sum columns+reverses)
+third_cfa<-'socialself=~cr_mva_se_solve +cr_mva_se_means+ 
+                          cr_mva_se_goal+cr_hn_scale+
+                          cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
+                          cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+ 
+                          cr_mva_se_handle+ cr_rc_opportunities+cr_rc_socialsit
+             socialworld=~cr_si_peopletrusted+ cr_si_peoplehelp+
+                          cr_si_threaten+ cr_si_othersthreaten+
+                           cr_vio_contrbeha+
+                          cr_vio_notdisc+ cr_vio_interargue+ 
+                          cr_vio_vioprivematt
+             socialsafetythreat=~cr_si_togetherness+ cr_si_friends+ 
+                          cr_si_partsport+cr_rc_friendsupp+ cr_rc_friendtimes+ 
+                           cr_vi_peer_times1+
+                          cr_vi_peer_times2+cr_vi_peer_times3+
+                          cr_vi_peer_times4+ cr_vi_peer_times5+
+                          cr_vi_peer_times6
+            nonsocialsafetythreat=~ cr_vio_home_yell+
+                          cr_vio_home_treatpoorly+cr_vio_home_slapparent+
+                          cr_vio_home_slapbrother+cr_vio_home_fatherhit+
+                          cr_vio_home_motherbeaten+  
+                          cr_edu_abuse+ cr_edu_otherabuse+ 
+                          cr_edu_punish+ cr_edu_abusetell'
+third_cfa_fit<-cfa(third_cfa,data=reduced_df,ordered=T, 
+                    missing = "pairwise")
+summary(third_cfa_fit,fit.measures=T)
