@@ -500,3 +500,22 @@ fourth_cfa<-'socialself=~cr_mva_opin_sum_REV + cr_mva_selfeff_sum +
                           cr_vio_home_REV_sum+ cr_edu_vio_sum'
 fourth_cfa_fit=cfa(fourth_cfa,data=reduced_df,ordered=T,missing='pairwise')
 summary(fourth_cfa_fit, fit.measures=T)
+
+#fifth attempt cfa: start from attempt one and add only 1 indicators per factor:
+fifth_cfa<- 'socialself=~ cr_mva_se_solve +cr_mva_se_means+ cr_mva_se_goal+
+                          cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
+                          cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+ 
+                          cr_mva_se_handle+cr_hn_scale
+              socialworld=~ cr_si_peopletrusted+ cr_si_peoplehelp+
+                          cr_si_threaten+ cr_si_othersthreaten+ 
+                          cr_vio_contrbeha
+              socialsafetythreat=~ cr_si_togetherness+ cr_vi_peer_times1+
+                          cr_vi_peer_times2+cr_vi_peer_times3+
+                          cr_vi_peer_times4+ cr_vi_peer_times5+
+                          cr_vi_peer_times6+cr_rc_friendsupp
+              nonsocialsafetythreat=~cr_vio_home_yell+cr_vio_home_treatpoorly+
+                          cr_vio_home_slapparent+ cr_vio_home_slapbrother+
+                          cr_vio_home_fatherhit+cr_vio_home_motherbeaten+
+                          cr_edu_abuse'
+fifth_cfa_fit<-cfa(fifth_cfa,data=reduced_df,ordered = T,missing='pairwise')
+summary(fifth_cfa_fit,fit.measures=T)
