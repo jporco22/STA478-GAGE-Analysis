@@ -62,15 +62,15 @@ table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
 #now create summarizing column for opinion questions and more:
 table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
   mutate(cr_mva_opin_sum_REV=sum(cr_mva_opinionelder_REV,cr_mva_opinfriend_REV,
-                                 cr_mva_opinionbroth_REV,cr_mva_opinionsist_REV))
+                                 cr_mva_opinionbroth_REV,cr_mva_opinionsist_REV)/4)
 table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
   mutate(cr_mva_selfeff_sum=sum(cr_mva_se_solve, cr_mva_se_means,
-                                cr_mva_se_goal,cr_hn_scale,cr_mva_se_event,
+                                cr_mva_se_goal,cr_mva_se_event,
                                 cr_mva_se_situat, cr_mva_se_prob, 
                                 cr_mva_se_calm, cr_mva_se_solut,
-                                cr_mva_se_trouble, cr_mva_se_handle))
+                                cr_mva_se_trouble, cr_mva_se_handle)/10)
 table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
-  mutate(cr_rc_socialself_sum=cr_rc_opportunities, cr_rc_socialsit)
+  mutate(cr_rc_socialself_sum=sum(cr_rc_opportunities, cr_rc_socialsit)/2)
 
 #table 1.2 df, social world:
 table_1_2_sw<- gage_baseline18 %>%
@@ -140,14 +140,14 @@ table_1_2_sw<- table_1_2_sw %>% rowwise() %>%
   mutate(cr_si_trust_REV_sum=
            sum(cr_si_trust_family_REV,cr_si_trust_neighbor_REV,
                cr_si_trust_know_REV,cr_si_trust_first_REV,
-               cr_si_trust_diffrelig_REV,cr_si_trust_diffnation_REV))
+               cr_si_trust_diffrelig_REV,cr_si_trust_diffnation_REV)/6)
 table_1_2_sw<- table_1_2_sw %>% rowwise() %>% 
   mutate(cr_si_trustcollective_REV_sum=
            sum(cr_si_peopletrusted_REV,cr_si_peoplehelp_REV,cr_si_threaten_REV,
-               cr_si_othersthreaten_REV))
+               cr_si_othersthreaten_REV)/4)
 table_1_2_sw<- table_1_2_sw %>% rowwise() %>% 
   mutate(cr_vio_attitude_sum=sum(cr_vio_contrbeha, cr_vio_notdisc, 
-                                 cr_vio_interargue, cr_vio_vioprivematt))
+                                 cr_vio_interargue, cr_vio_vioprivematt)/4)
 
 #table 1.3, social safety/threat
 table_1_3_violenceportion<- cr_violence_base %>%
@@ -255,17 +255,17 @@ table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
 table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
   mutate(cr_vio_safe_soc_REV_sum=
            sum(cr_vio_safe_friend_REV,cr_vio_safe_neighbor_REV,
-               cr_vio_safe_relative_REV))
+               cr_vio_safe_relative_REV)/3)
 table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
   mutate(cr_vi_peer_times_REV_sum=sum(
     cr_vi_peer_times1_REV, cr_vi_peer_times2_REV, cr_vi_peer_times3_REV, 
-    cr_vi_peer_times4_REV, cr_vi_peer_times5_REV, cr_vi_peer_times6_REV))
+    cr_vi_peer_times4_REV, cr_vi_peer_times5_REV, cr_vi_peer_times6_REV)/6)
 table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
-  mutate(cr_rc_friend_sum=sum(cr_rc_friendsupp,cr_rc_friendtimes))
+  mutate(cr_rc_friend_sum=sum(cr_rc_friendsupp,cr_rc_friendtimes)/2)
 table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
   mutate(cr_si_ever_REV_sum=sum(
     cr_si_ever_1_REV, cr_si_ever_2_REV, cr_si_ever_3_REV, cr_si_ever_5_REV, 
-    cr_si_partsport_REV))
+    cr_si_partsport_REV)/5)
 
 #table 1.4, non-social safety/threat: (pulling from both data frames)
 table_1_4_cr_portion<- gage_baseline18 %>% 
@@ -351,15 +351,15 @@ table_1_4_nsst<- table_1_4_nsst%>% rowwise() %>%
            sum(cr_vio_safe_home_REV,
                cr_vio_safe_market_REV,cr_vio_safe_travelmarket_REV,
                cr_vio_safe_religious_REV,
-               cr_vio_safe_makani_REV,cr_edu_trvlsafe_REV,cr_edu_schsafe_REV))
+               cr_vio_safe_makani_REV,cr_edu_trvlsafe_REV,cr_edu_schsafe_REV)/7)
 table_1_4_nsst<- table_1_4_nsst%>% rowwise() %>%
   mutate(cr_vio_home_REV_sum=sum(
     cr_vio_home_treatpoorly_REV, cr_vio_home_slapparent_REV, 
     cr_vio_home_slapbrother_REV, cr_vio_home_fatherhit_REV, 
-    cr_vio_home_motherbeaten_REV, cr_vio_home_yell_REV))
+    cr_vio_home_motherbeaten_REV, cr_vio_home_yell_REV)/6)
 table_1_4_nsst<- table_1_4_nsst%>% rowwise() %>%
   mutate(cr_edu_vio_sum=sum(
-    cr_edu_abuse, cr_edu_otherabuse, cr_edu_punish))
+    cr_edu_abuse, cr_edu_otherabuse, cr_edu_punish)/3)
 
 #table 2, social and geopolitical positioning
 table_2_socgeo<- gage_baseline18 %>%
@@ -519,3 +519,17 @@ fifth_cfa<- 'socialself=~ cr_mva_se_solve +cr_mva_se_means+ cr_mva_se_goal+
                           cr_edu_abuse'
 fifth_cfa_fit<-cfa(fifth_cfa,data=reduced_df,ordered = T,missing='pairwise')
 summary(fifth_cfa_fit,fit.measures=T)
+
+#6th attempt cfa: averages; 
+#above, for all of the "sum" columns, the sum is divided by n
+sixth_cfa<-'socialself=~cr_mva_opin_sum_REV + cr_mva_selfeff_sum + 
+                          cr_rc_socialself_sum
+              socialworld=~cr_si_trust_REV_sum+ cr_si_trustcollective_REV_sum+ 
+                          cr_vio_attitude_sum
+              socialsafetythreat=~cr_vio_safe_soc_REV_sum+ 
+                          cr_vi_peer_times_REV_sum + cr_rc_friend_sum+ 
+                          cr_si_ever_REV_sum
+              nonsocialsafetythreat=~cr_vi_nonsoc_safe_REV_sum+ 
+                          cr_vio_home_REV_sum+ cr_edu_vio_sum'
+sixth_cfa_fit=cfa(sixth_cfa,data=reduced_df,ordered=T,missing='pairwise')
+summary(sixth_cfa_fit, fit.measures=T)
