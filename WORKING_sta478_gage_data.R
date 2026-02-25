@@ -547,7 +547,7 @@ seventh_cfa_fit=cfa(seventh_cfa,data=reduced_df,ordered=T,missing='pairwise')
 summary(seventh_cfa_fit, fit.measures=T)
 
 #8th attempt CFA:
-first_cfa<- 'socialself=~ cr_mva_se_means+ cr_mva_se_goal+
+eighth_cfa<- 'socialself=~ cr_mva_se_means+ cr_mva_se_goal+
                           cr_mva_se_event+ cr_mva_se_prob+
                           cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+
                           cr_mva_se_handle
@@ -559,12 +559,49 @@ first_cfa<- 'socialself=~ cr_mva_se_means+ cr_mva_se_goal+
               nonsocialsafetythreat=~cr_vio_home_treatpoorly+
                            cr_vio_home_slapbrother+
                           cr_vio_home_fatherhit+ cr_vio_home_motherbeaten'
-first_cfa_fit<- cfa(first_cfa, data=reduced_df, ordered=T, 
+eighth_cfa_fit<- cfa(eighth_cfa, data=reduced_df, ordered=T, 
                     missing = "pairwise")
+summary(eighth_cfa_fit,fit.measures=T)
 
-summary(first_cfa_fit,fit.measures=T)
 
-#EFA First attempt
+#cfa 9th attempt (adjusting factors after looking at which ones have <0.3 loadings)
+ninth_cfa<-'socialself=~cr_mva_se_solve +cr_mva_se_means+ 
+                          cr_mva_se_goal+cr_hn_scale+
+                          cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
+                          cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+ 
+                          cr_mva_se_handle+ cr_rc_opportunities+cr_rc_socialsit+
+                          cr_mva_opinfriend+ cr_mva_opinionelder+ 
+                          cr_mva_opinionbroth + cr_mva_opinionsist
+             socialworld=~ cr_si_peopletrusted+ cr_si_peoplehelp+
+                           cr_si_trust_family+
+                          cr_si_trust_neighbor+ cr_si_trust_know+ cr_si_trust_first+
+                           cr_si_trust_diffnation
+                          
+             socialsafetythreat=~cr_si_togetherness+ 
+                          cr_rc_friendsupp+ cr_rc_friendtimes+ 
+                          cr_vi_peer_times1+
+                          cr_vi_peer_times2+cr_vi_peer_times3+
+                          cr_vi_peer_times4+ cr_vi_peer_times5+
+                          cr_vi_peer_times6+ cr_vio_safe_friend+
+                          cr_vio_safe_neighbor+ cr_vio_safe_relative+
+                          cr_vio_safe_work+cr_rc_famsafe 
+            nonsocialsafetythreat=~ cr_vio_home_yell+
+                          cr_vio_home_treatpoorly+cr_vio_home_slapparent+
+                          cr_vio_home_slapbrother+cr_vio_home_fatherhit+
+                           
+                          cr_edu_abuse+ cr_edu_otherabuse+ 
+                          cr_edu_punish+  cr_vio_safe_home+
+                          cr_vio_safe_travelwork+ cr_vio_safe_market+
+                          cr_vio_safe_travelmarket+ cr_vio_safe_waterfuel+
+                          cr_vio_safe_religious+ cr_vio_safe_makani+
+                          cr_edu_trvlsafe+ cr_edu_schsafe'
+ninth_cfa_fit<-cfa(ninth_cfa,data=reduced_df,ordered=T, 
+                   missing = "pairwise")
+summary(ninth_cfa_fit,fit.measures=T)
+inspect(ninth_cfa_fit, what="std")
+
+
+#######EFA First attempt
 # contains most indicator variables from the 4 main factors.
 # exclude the participation in groups questions and other ones that didn't seem ordinal
 efa_test<- efa(data=reduced_df, nfactors=4,
