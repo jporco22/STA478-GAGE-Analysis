@@ -19,7 +19,7 @@ cr_violence_base<- read_dta("C:/Users/jporc/OneDrive/Desktop/sta478/GAGE_Jordan_
 cr_labels <- sapply(gage_baseline18, function(x) attr(x, "label"))
 cat(attr(gage_baseline18$cr_crh_control, "label"))
 #Find labels containing a specific string:
-cr_labels[grep("attended", cr_labels, ignore.case = TRUE)]
+cr_labels[grep("injur", cr_labels, ignore.case = TRUE)]
 
 #Create vector of column labels for violence data:
 vio_labels<-sapply(cr_violence_base, function(x) attr(x, "label"))
@@ -59,18 +59,6 @@ table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
   mutate(cr_mva_opinionbroth_REV=ifelse(cr_mva_opinionbroth==1,2,
                                         ifelse(cr_mva_opinionbroth==2,1,
                                                NA)))
-#now create summarizing column for opinion questions and more:
-table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
-  mutate(cr_mva_opin_sum_REV=sum(cr_mva_opinionelder_REV,cr_mva_opinfriend_REV,
-                                 cr_mva_opinionbroth_REV,cr_mva_opinionsist_REV))
-table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
-  mutate(cr_mva_selfeff_sum=sum(cr_mva_se_solve, cr_mva_se_means,
-                                cr_mva_se_goal,cr_mva_se_event,
-                                cr_mva_se_situat, cr_mva_se_prob, 
-                                cr_mva_se_calm, cr_mva_se_solut,
-                                cr_mva_se_trouble, cr_mva_se_handle))
-table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
-  mutate(cr_rc_socialself_sum=sum(cr_rc_opportunities, cr_rc_socialsit))
 
 #table 1.2 df, social world:
 table_1_2_sw<- gage_baseline18 %>%
@@ -135,19 +123,6 @@ table_1_2_sw<- table_1_2_sw %>% rowwise() %>%
                   ifelse(cr_si_trust_diffnation==2,3,
                          ifelse(cr_si_trust_diffnation==3,2,
                                 ifelse(cr_si_trust_diffnation==4,1,NA)))))
-#create summarizing columns:
-table_1_2_sw<- table_1_2_sw %>% rowwise() %>% 
-  mutate(cr_si_trust_REV_sum=
-           sum(cr_si_trust_family_REV,cr_si_trust_neighbor_REV,
-               cr_si_trust_know_REV,cr_si_trust_first_REV,
-               cr_si_trust_diffrelig_REV,cr_si_trust_diffnation_REV))
-table_1_2_sw<- table_1_2_sw %>% rowwise() %>% 
-  mutate(cr_si_trustcollective_REV_sum=
-           sum(cr_si_peopletrusted_REV,cr_si_peoplehelp_REV,cr_si_threaten_REV,
-               cr_si_othersthreaten_REV))
-table_1_2_sw<- table_1_2_sw %>% rowwise() %>% 
-  mutate(cr_vio_attitude_sum=sum(cr_vio_contrbeha, cr_vio_notdisc, 
-                                 cr_vio_interargue, cr_vio_vioprivematt))
 
 #table 1.3, social safety/threat
 table_1_3_violenceportion<- cr_violence_base %>%
@@ -168,52 +143,8 @@ table_1_3_crportion<- gage_baseline18 %>%
          cr_rc_friendsupp,
          cr_rc_friendtimes)
 table_1_3_sst<- inner_join(table_1_3_crportion,table_1_3_violenceportion, by="hhid")
-#add in columns to summarize group/activity participation data:
-#exclude group #4 (JHOUD Amira Bassma centre) due to NA values
-table_1_3_sst<- table_1_3_sst %>% 
-  mutate(cr_si_ever_sum=ifelse((cr_si_ever_1+ cr_si_ever_2 
-         + cr_si_ever_3 + cr_si_ever_5)>4, 1,0))
-table_1_3_sst<- table_1_3_sst %>%
-  mutate(cr_si_member_sum=
-           ifelse((cr_si_member1+ cr_si_member2 
-                    + cr_si_member3 +  
-                     cr_si_member5)>4, 1,0))
-table_1_3_sst<- table_1_3_sst %>%
-  mutate(cr_si_oftpart_sum=
-           ifelse((cr_si_oftpart1+ cr_si_oftpart2 
-                   + cr_si_oftpart3 + cr_si_oftpart5)<6, 1,0))
 
 #add in reverse-scale versions of certain columns:
-table_1_3_sst<- table_1_3_sst %>% rowwise() %>%
-  mutate(cr_vi_peer_times1_REV=
-           ifelse(cr_vi_peer_times1==1,3,
-                  ifelse(cr_vi_peer_times1==2,2,
-                         ifelse(cr_vi_peer_times1==3,1,NA))))
-table_1_3_sst<- table_1_3_sst %>% rowwise() %>%
-  mutate(cr_vi_peer_times2_REV=
-           ifelse(cr_vi_peer_times2==1,3,
-                  ifelse(cr_vi_peer_times2==2,2,
-                         ifelse(cr_vi_peer_times2==3,1,NA))))
-table_1_3_sst<- table_1_3_sst %>% rowwise() %>%
-  mutate(cr_vi_peer_times3_REV=
-           ifelse(cr_vi_peer_times3==1,3,
-                  ifelse(cr_vi_peer_times3==2,2,
-                         ifelse(cr_vi_peer_times3==3,1,NA))))
-table_1_3_sst<- table_1_3_sst %>% rowwise() %>%
-  mutate(cr_vi_peer_times4_REV=
-           ifelse(cr_vi_peer_times4==1,3,
-                  ifelse(cr_vi_peer_times4==2,2,
-                         ifelse(cr_vi_peer_times4==3,1,NA))))
-table_1_3_sst<- table_1_3_sst %>% rowwise() %>%
-  mutate(cr_vi_peer_times5_REV=
-           ifelse(cr_vi_peer_times5==1,3,
-                  ifelse(cr_vi_peer_times5==2,2,
-                         ifelse(cr_vi_peer_times5==3,1,NA))))
-table_1_3_sst<- table_1_3_sst %>% rowwise() %>%
-  mutate(cr_vi_peer_times6_REV=
-           ifelse(cr_vi_peer_times6==1,3,
-                  ifelse(cr_vi_peer_times6==2,2,
-                         ifelse(cr_vi_peer_times6==3,1,NA))))
 table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
   mutate(cr_vio_safe_friend_REV=
            ifelse(cr_vio_safe_friend==1,2,
@@ -250,22 +181,6 @@ table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
 table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
   mutate(cr_si_ever_5_REV=ifelse(cr_si_ever_5==1,2,
                                  ifelse(cr_si_ever_5==2,1,NA)))
-
-#create summarizing columns:
-table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
-  mutate(cr_vio_safe_soc_REV_sum=
-           sum(cr_vio_safe_friend_REV,cr_vio_safe_neighbor_REV,
-               cr_vio_safe_relative_REV))
-table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
-  mutate(cr_vi_peer_times_REV_sum=sum(
-    cr_vi_peer_times1_REV, cr_vi_peer_times2_REV, cr_vi_peer_times3_REV, 
-    cr_vi_peer_times4_REV, cr_vi_peer_times5_REV, cr_vi_peer_times6_REV))
-table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
-  mutate(cr_rc_friend_sum=sum(cr_rc_friendsupp,cr_rc_friendtimes))
-table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
-  mutate(cr_si_ever_REV_sum=sum(
-    cr_si_ever_1_REV, cr_si_ever_2_REV, cr_si_ever_3_REV, cr_si_ever_5_REV, 
-    cr_si_partsport_REV))
 
 #table 1.4, non-social safety/threat: (pulling from both data frames)
 table_1_4_cr_portion<- gage_baseline18 %>% 
@@ -320,46 +235,6 @@ table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
   mutate(cr_edu_schsafe_REV=
            ifelse(cr_edu_schsafe==1,2,
                   ifelse(cr_edu_schsafe==2,1,NA)))
-table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
-  mutate(cr_vio_home_yell_REV=ifelse(
-    cr_vio_home_yell==1,3,ifelse(cr_vio_home_yell==2,2,ifelse(
-      cr_vio_home_yell==3,1,NA))))
-table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
-  mutate(cr_vio_home_treatpoorly_REV=ifelse(
-    cr_vio_home_treatpoorly==1,3,ifelse(cr_vio_home_treatpoorly==2,2,ifelse(
-      cr_vio_home_treatpoorly==3,1,NA))))
-table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
-  mutate(cr_vio_home_slapparent_REV=ifelse(
-    cr_vio_home_slapparent==1,3,ifelse(cr_vio_home_slapparent==2,2,ifelse(
-      cr_vio_home_slapparent==3,1,NA))))
-table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
-  mutate(cr_vio_home_slapbrother_REV=ifelse(
-    cr_vio_home_slapbrother==1,3,ifelse(cr_vio_home_slapbrother==2,2,ifelse(
-      cr_vio_home_slapbrother==3,1,NA))))
-table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
-  mutate(cr_vio_home_fatherhit_REV=ifelse(
-    cr_vio_home_fatherhit==1,3,ifelse(cr_vio_home_fatherhit==2,2,ifelse(
-      cr_vio_home_fatherhit==3,1,NA))))
-table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
-  mutate(cr_vio_home_motherbeaten_REV=ifelse(
-    cr_vio_home_motherbeaten==1,3,ifelse(cr_vio_home_motherbeaten==2,2,ifelse(
-      cr_vio_home_motherbeaten==3,1,NA))))
-
-# create summarizing columns:
-table_1_4_nsst<- table_1_4_nsst%>% rowwise() %>%
-  mutate(cr_vi_nonsoc_safe_REV_sum=
-           sum(cr_vio_safe_home_REV,
-               cr_vio_safe_market_REV,cr_vio_safe_travelmarket_REV,
-               cr_vio_safe_religious_REV,
-               cr_vio_safe_makani_REV,cr_edu_trvlsafe_REV,cr_edu_schsafe_REV))
-table_1_4_nsst<- table_1_4_nsst%>% rowwise() %>%
-  mutate(cr_vio_home_REV_sum=sum(
-    cr_vio_home_treatpoorly_REV, cr_vio_home_slapparent_REV, 
-    cr_vio_home_slapbrother_REV, cr_vio_home_fatherhit_REV, 
-    cr_vio_home_motherbeaten_REV, cr_vio_home_yell_REV))
-table_1_4_nsst<- table_1_4_nsst%>% rowwise() %>%
-  mutate(cr_edu_vio_sum=sum(
-    cr_edu_abuse, cr_edu_otherabuse, cr_edu_punish))
 
 #table 2, social and geopolitical positioning
 table_2_socgeo<- gage_baseline18 %>%
@@ -420,12 +295,10 @@ first_cfa<- 'socialself=~ cr_mva_se_solve +cr_mva_se_means+ cr_mva_se_goal+
                           cr_vio_home_fatherhit+ cr_vio_home_motherbeaten'
 first_cfa_fit<- cfa(first_cfa, data=reduced_df, ordered=T, 
                     missing = "pairwise")
-
 summary(first_cfa_fit,fit.measures=T)
 
 
 #2nd CFA trial; summarized variables AND corrected scales:
-
 #need to indicate that "sum" variables are continuous, NOT ordered.
 ordered_cols<- reduced_df %>% 
   select(!contains("sum"))
@@ -455,7 +328,6 @@ second_cfa<-'socialself=~cr_mva_opin_sum_REV +cr_mva_se_solve +cr_mva_se_means+
                           cr_edu_punish+ cr_edu_abusetell'
 second_cfa_fit<-cfa(second_cfa,data=reduced_df,ordered=ordered_cols_list, 
                     missing = "pairwise")
-                        
 summary(second_cfa_fit,fit.measures=T)
 
 
@@ -551,8 +423,8 @@ eighth_cfa<- 'socialself=~ cr_mva_se_means+ cr_mva_se_goal+
                           cr_mva_se_event+ cr_mva_se_prob+
                           cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+
                           cr_mva_se_handle
-              socialworld=~  cr_si_peoplehelp+
-                           cr_si_othersthreaten
+              socialworld=~  cr_si_peopletrusted+ cr_si_peoplehelp+
+                          cr_si_threaten+ cr_si_othersthreaten
               socialsafetythreat=~  cr_vi_peer_times1+
                           cr_vi_peer_times2+
                           cr_vi_peer_times4+ cr_vi_peer_times5+cr_vi_peer_times6
@@ -565,40 +437,51 @@ summary(eighth_cfa_fit,fit.measures=T)
 
 
 #cfa 9th attempt (adjusting factors after looking at which ones have <0.3 loadings)
-ninth_cfa<-'socialself=~cr_mva_se_solve +cr_mva_se_means+ 
-                          cr_mva_se_goal+cr_hn_scale+
+ninth_cfa<-'socialself=~cr_mva_se_solve +
+                          cr_mva_se_goal+
                           cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
-                          cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+ 
-                          cr_mva_se_handle+ cr_rc_opportunities+cr_rc_socialsit+
-                          cr_mva_opinfriend+ cr_mva_opinionelder+ 
-                          cr_mva_opinionbroth + cr_mva_opinionsist
+                           cr_mva_se_solut+ cr_mva_se_trouble+ 
+                          cr_mva_se_handle 
              socialworld=~ cr_si_peopletrusted+ cr_si_peoplehelp+
-                           cr_si_trust_family+
-                          cr_si_trust_neighbor+ cr_si_trust_know+ cr_si_trust_first+
-                           cr_si_trust_diffnation
-                          
-             socialsafetythreat=~cr_si_togetherness+ 
+                          cr_si_trust_neighbor+ cr_si_trust_know
+             socialsafetythreat=~
                           cr_rc_friendsupp+ cr_rc_friendtimes+ 
-                          cr_vi_peer_times1+
                           cr_vi_peer_times2+cr_vi_peer_times3+
                           cr_vi_peer_times4+ cr_vi_peer_times5+
                           cr_vi_peer_times6+ cr_vio_safe_friend+
                           cr_vio_safe_neighbor+ cr_vio_safe_relative+
                           cr_vio_safe_work+cr_rc_famsafe 
-            nonsocialsafetythreat=~ cr_vio_home_yell+
-                          cr_vio_home_treatpoorly+cr_vio_home_slapparent+
-                          cr_vio_home_slapbrother+cr_vio_home_fatherhit+
-                           
-                          cr_edu_abuse+ cr_edu_otherabuse+ 
-                          cr_edu_punish+  cr_vio_safe_home+
+            nonsocialsafetythreat=~ 
+                          cr_vio_home_slapparent+cr_vio_home_slapbrother+
+                          cr_edu_abuse+ cr_edu_otherabuse+ cr_vio_safe_home+
                           cr_vio_safe_travelwork+ cr_vio_safe_market+
-                          cr_vio_safe_travelmarket+ cr_vio_safe_waterfuel+
-                          cr_vio_safe_religious+ cr_vio_safe_makani+
-                          cr_edu_trvlsafe+ cr_edu_schsafe'
+                          cr_vio_safe_travelmarket+ cr_vio_safe_waterfuel
+                           '
 ninth_cfa_fit<-cfa(ninth_cfa,data=reduced_df,ordered=T, 
                    missing = "pairwise")
 summary(ninth_cfa_fit,fit.measures=T)
 inspect(ninth_cfa_fit, what="std")
+
+#10th CFA, chnaged factor composition based on EFA results 
+tenth_cfa<-'
+social self=~ cr_mva_opinfriend + cr_mva_se_solve +cr_mva_se_means+ 
+cr_mva_se_goal+cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+cr_mva_se_calm+
+cr_mva_se_solut+ cr_mva_se_trouble+ cr_mva_se_handle+ cr_rc_opportunities+
+cr_rc_socialsit+ cr_rc_famsafe
+socialworld=~ cr_si_peopletrusted + cr_si_peoplehelp +
+cr_si_trust_neighbor + cr_si_trust_know +  cr_si_friends
++ cr_rc_friendsupp + cr_rc_friendtimes
+generalthreat=~ cr_vi_peer_times1+ cr_vi_peer_times2+cr_vi_peer_times3+
+cr_vi_peer_times4+ cr_vi_peer_times5+  cr_vi_peer_times6+ cr_vio_home_yell+
+cr_vio_home_treatpoorly+cr_vio_home_slapparent+cr_vio_home_slapbrother+
+cr_vio_home_fatherhit+cr_edu_abuse + cr_edu_otherabuse+ cr_edu_punish
+generalsafety=~ cr_vio_safe_friend+cr_vio_safe_neighbor+ cr_vio_safe_relative+
+cr_vio_safe_work+ cr_vio_safe_home+cr_vio_safe_travelwork+ cr_vio_safe_market+
+cr_vio_safe_travelmarket+ cr_vio_safe_waterfuel+ cr_vio_safe_religious + 
+cr_vio_safe_makani + cr_edu_trvlsafe 
+'
+tenth_cfa_fit<-cfa(tenth_cfa,data=reduced_df, ordered=T, missing='pairwise')
+summary(tenth_cfa_fit, fit.measures=T)
 
 
 #######EFA First attempt
@@ -792,3 +675,42 @@ fifth_efa<- efa(data=reduced_df, nfactors=6,
 summary(fifth_efa, fit.measures=T)
 
 
+
+
+#####try SEM to incorpate other tables/factors
+
+# to add later 
+
+
+sem_model <- '
+#factor compositions:
+socialself=~cr_mva_se_solve +cr_mva_se_goal+
+                          cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
+                           cr_mva_se_solut+ cr_mva_se_trouble+ cr_mva_se_handle 
+socialworld=~ cr_si_peopletrusted+ cr_si_peoplehelp+cr_si_trust_neighbor+ 
+            cr_si_trust_know
+socialsafetythreat=~ cr_rc_friendsupp+ cr_rc_friendtimes+ 
+                          cr_vi_peer_times2+cr_vi_peer_times3+
+                          cr_vi_peer_times4+ cr_vi_peer_times5+
+                          cr_vi_peer_times6+ cr_vio_safe_friend+
+                          cr_vio_safe_neighbor+ cr_vio_safe_relative+
+                          cr_vio_safe_work+cr_rc_famsafe 
+nonsocialsafetythreat=~ cr_vio_home_slapparent+cr_vio_home_slapbrother+
+                          cr_edu_abuse+ cr_edu_otherabuse+ cr_vio_safe_home+
+                          cr_vio_safe_travelwork+ cr_vio_safe_market+
+                          cr_vio_safe_travelmarket+ cr_vio_safe_waterfuel
+healthoutcome =~ cr_hn_gnhlth + cr_crh_worry + cr_crh_control+ cr_crh_focus+
+              cr_crh_accept+ cr_crh_friends+ cr_hn_injuryyn
+sociogeopol =~ list_crgender + list_crage + cr_cs_nationality+ cr_rc_enoughfood
+edueco =~ cr_edu_attndever  + cr_edu_lastattndage+ cr_edu_highatt
+
+#factor relationships:
+edueco ~ sociogeopol
+socialself~ edueco
+socialworld ~ edueco
+socialsafetythreat ~ edueco
+nonsocialsafetythreat ~ edueco
+healthoutcome~ socialself + socialworld + socialsafetythreat + nonsocialsafetythreat
+'
+sem_fit<- sem(model=sem_model,data=reduced_df, ordered=T, missing="pairwise")
+summary(sem_fit, fit.measures=T)
