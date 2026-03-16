@@ -462,7 +462,7 @@ ninth_cfa_fit<-cfa(ninth_cfa,data=reduced_df,ordered=T,
 summary(ninth_cfa_fit,fit.measures=T)
 inspect(ninth_cfa_fit, what="std")
 
-#10th CFA, chnaged factor composition based on EFA results 
+#10th CFA, changed factor composition based on EFA results 
 tenth_cfa<-'
 social self=~ cr_mva_opinfriend + cr_mva_se_solve +cr_mva_se_means+ 
 cr_mva_se_goal+cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+cr_mva_se_calm+
@@ -482,6 +482,8 @@ cr_vio_safe_makani + cr_edu_trvlsafe
 '
 tenth_cfa_fit<-cfa(tenth_cfa,data=reduced_df, ordered=T, missing='pairwise')
 summary(tenth_cfa_fit, fit.measures=T)
+lavInspect(tenth_cfa_fit, what="std")
+
 
 
 #######EFA First attempt
@@ -677,40 +679,41 @@ summary(fifth_efa, fit.measures=T)
 
 
 
-#####try SEM to incorpate other tables/factors
+####Multivariate regression
 
-# to add later 
+lavInspect(tenth_cfa_fit, what="std") 
+#choose 3 variables with highest loadings from each factor
 
+##social self
+#cr_mva_se_situat, cr_mva_se_solut, cr_mva_se_event  
+##social world
+# cr_si_trust_neighbor + cr_si_peopletrusted + cr_si_peoplehelp
+## general threat
+#cr_edu_abuse, cr_vi_peer_times4, cr_edu_otherabuse
+##general safety
+#cr_vio_safe_travelmarket, cr_vio_safe_market, cr_vio_safe_travelwork    
+# list_crgender, hh_cs_youngcoh, cr_rc_cyrm
 
-sem_model <- '
-#factor compositions:
-socialself=~cr_mva_se_solve +cr_mva_se_goal+
-                          cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
-                           cr_mva_se_solut+ cr_mva_se_trouble+ cr_mva_se_handle 
-socialworld=~ cr_si_peopletrusted+ cr_si_peoplehelp+cr_si_trust_neighbor+ 
-            cr_si_trust_know
-socialsafetythreat=~ cr_rc_friendsupp+ cr_rc_friendtimes+ 
-                          cr_vi_peer_times2+cr_vi_peer_times3+
-                          cr_vi_peer_times4+ cr_vi_peer_times5+
-                          cr_vi_peer_times6+ cr_vio_safe_friend+
-                          cr_vio_safe_neighbor+ cr_vio_safe_relative+
-                          cr_vio_safe_work+cr_rc_famsafe 
-nonsocialsafetythreat=~ cr_vio_home_slapparent+cr_vio_home_slapbrother+
-                          cr_edu_abuse+ cr_edu_otherabuse+ cr_vio_safe_home+
-                          cr_vio_safe_travelwork+ cr_vio_safe_market+
-                          cr_vio_safe_travelmarket+ cr_vio_safe_waterfuel
-healthoutcome =~ cr_hn_gnhlth + cr_crh_worry + cr_crh_control+ cr_crh_focus+
-              cr_crh_accept+ cr_crh_friends+ cr_hn_injuryyn
-sociogeopol =~ list_crgender + list_crage + cr_cs_nationality+ cr_rc_enoughfood
-edueco =~ cr_edu_attndever  + cr_edu_lastattndage+ cr_edu_highatt
+#multivariate model #1
+multivar_1 <- lm(cr_rc_cyrm ~ as.factor(cr_mva_se_situat)+ as.factor(cr_mva_se_solut)
+              + as.factor(cr_mva_se_event)+
+                as.factor(cr_si_trust_neighbor) + as.factor(cr_si_peopletrusted)
+              + as.factor(cr_si_peoplehelp)+
+                as.factor(cr_edu_abuse)+ as.factor(cr_vi_peer_times4)+
+                as.factor(cr_edu_otherabuse)+
+                as.factor(cr_vio_safe_travelmarket)+ as.factor(cr_vio_safe_market)+
+                as.factor(cr_vio_safe_travelwork)+ 
+                as.factor(list_crgender) +as.factor(hh_cs_youngcoh), data=reduced_df )
 
-#factor relationships:
-edueco ~ sociogeopol
-socialself~ edueco
-socialworld ~ edueco
-socialsafetythreat ~ edueco
-nonsocialsafetythreat ~ edueco
-healthoutcome~ socialself + socialworld + socialsafetythreat + nonsocialsafetythreat
-'
-sem_fit<- sem(model=sem_model,data=reduced_df, ordered=T, missing="pairwise")
-summary(sem_fit, fit.measures=T)
+summary(multivar_1)
+
+#model #2, remove variables with no significant correlation
+multivar_2<-lm(cr_rc_cyrm ~ 
+            as.factor(cr_mva_se_event)+
+              as.factor(cr_si_trust_neighbor) 
+            + as.factor(cr_si_peoplehelp)+
+              as.factor(cr_edu_abuse)+ 
+              as.factor(list_crgender)+
+              as.factor(cr_vio_safe_travelwork) 
+              , data=reduced_df )
+summary(multivar_2)
