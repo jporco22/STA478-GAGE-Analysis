@@ -235,7 +235,14 @@ table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
   mutate(cr_edu_schsafe_REV=
            ifelse(cr_edu_schsafe==1,2,
                   ifelse(cr_edu_schsafe==2,1,NA)))
-
+table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
+  mutate(cr_edu_abuse_REV=
+           ifelse(cr_edu_abuse==1,2,
+                  ifelse(cr_edu_abuse==2,1,NA)))
+table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
+  mutate(cr_edu_otherabuse_REV=
+           ifelse(cr_edu_otherabuse==1,2,
+                  ifelse(cr_edu_otherabuse==2,1,NA)))
 #table 2, social and geopolitical positioning
 table_2_socgeo<- gage_baseline18 %>%
   select(hhid,
@@ -470,7 +477,7 @@ cr_mva_se_solut+ cr_mva_se_trouble+ cr_mva_se_handle+ cr_rc_opportunities+
 cr_rc_socialsit+ cr_rc_famsafe
 socialworld=~ cr_si_peopletrusted + cr_si_peoplehelp +
 cr_si_trust_neighbor + cr_si_trust_know +  cr_si_friends
-+ cr_rc_friendsupp + cr_rc_friendtimes
++ cr_rc_friendsupp + cr_rc_friendtimes 
 generalthreat=~ cr_vi_peer_times1+ cr_vi_peer_times2+cr_vi_peer_times3+
 cr_vi_peer_times4+ cr_vi_peer_times5+  cr_vi_peer_times6+ cr_vio_home_yell+
 cr_vio_home_treatpoorly+cr_vio_home_slapparent+cr_vio_home_slapbrother+
@@ -483,6 +490,45 @@ cr_vio_safe_makani + cr_edu_trvlsafe
 tenth_cfa_fit<-cfa(tenth_cfa,data=reduced_df, ordered=T, missing='pairwise')
 summary(tenth_cfa_fit, fit.measures=T)
 lavInspect(tenth_cfa_fit, what="std")
+
+#For paper: "Model A"- show what happens with everything
+model_a_cfa<-'socialself=~cr_hn_scale+ cr_mva_opinfriend+ cr_mva_opinionelder+
+                cr_mva_opinionbroth+cr_mva_opinionsist+ cr_mva_se_solve +
+                          cr_mva_se_means+ cr_mva_se_goal+
+                          cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+
+                           cr_mva_se_calm+ cr_mva_se_solut+ cr_mva_se_trouble+ 
+                          cr_mva_se_handle + cr_rc_opportunities+ cr_rc_socialsit
+             socialworld=~ cr_si_diversity+ cr_si_peopletrusted+ cr_si_peoplehelp+
+                          cr_si_threaten+ cr_si_othersthreaten+ 
+                          cr_si_trust_family+ cr_si_trust_neighbor +
+                          cr_si_trust_know+ cr_si_trust_first+ 
+                          cr_si_trust_diffrelig + cr_si_trust_diffnation + 
+                          cr_vio_contrbeha+ cr_vio_notdisc+ cr_vio_interargue+
+                          cr_vio_vioprivematt
+             socialsafetythreat=~ cr_si_togetherness+
+                          cr_rc_friendsupp+ cr_rc_friendtimes+ cr_vi_peer_times1+
+                          cr_vi_peer_times2+cr_vi_peer_times3+
+                          cr_vi_peer_times4+ cr_vi_peer_times5+
+                          cr_vi_peer_times6+ cr_vio_safe_friend+
+                          cr_vio_safe_neighbor+ cr_vio_safe_relative+
+                          cr_vio_safe_work+cr_rc_famsafe+ cr_si_friends+
+                          cr_si_partsport 
+            nonsocialsafetythreat=~ 
+                          cr_vio_home_yell+ cr_vio_home_treatpoorly +
+                          cr_vio_home_slapparent+ cr_vio_home_slapbrother+
+                          cr_vio_home_fatherhit+ cr_vio_home_motherbeaten+
+                          cr_edu_abuse+ cr_edu_otherabuse+cr_edu_punish+
+                          cr_edu_abusetell+
+                          cr_vio_safe_home+
+                          cr_vio_safe_travelwork+ cr_vio_safe_market+
+                          cr_vio_safe_travelmarket+ cr_vio_safe_waterfuel+
+                          cr_vio_safe_religious+ cr_vio_safe_makani+ 
+                          cr_edu_trvlsafe+ cr_edu_schsafe
+                          '
+model_a_cfa_fit<-cfa(model_a_cfa,data=reduced_df,ordered=T, 
+                   missing = "pairwise")
+summary(model_a_cfa_fit,fit.measures=T)
+
 
 
 
@@ -697,12 +743,12 @@ lavInspect(tenth_cfa_fit, what="std")
 #multivariate model #1
 multivar_1 <- lm(cr_rc_cyrm ~ as.factor(cr_mva_se_situat)+ as.factor(cr_mva_se_solut)
               + as.factor(cr_mva_se_event)+
-                as.factor(cr_si_trust_neighbor) + as.factor(cr_si_peopletrusted)
-              + as.factor(cr_si_peoplehelp)+
-                as.factor(cr_edu_abuse)+ as.factor(cr_vi_peer_times4)+
-                as.factor(cr_edu_otherabuse)+
-                as.factor(cr_vio_safe_travelmarket)+ as.factor(cr_vio_safe_market)+
-                as.factor(cr_vio_safe_travelwork)+ 
+                as.factor(cr_si_trust_neighbor_REV) + as.factor(cr_si_peopletrusted_REV)
+              + as.factor(cr_si_peoplehelp_REV)+
+                as.factor(cr_edu_abuse_REV)+ as.factor(cr_vi_peer_times4)+
+                as.factor(cr_edu_otherabuse_REV)+
+                as.factor(cr_vio_safe_travelmarket_REV)+ as.factor(cr_vio_safe_market_REV)+
+                as.factor(cr_vio_safe_travelwork_REV)+ 
                 as.factor(list_crgender) +as.factor(hh_cs_youngcoh), data=reduced_df )
 
 summary(multivar_1)
@@ -710,10 +756,86 @@ summary(multivar_1)
 #model #2, remove variables with no significant correlation
 multivar_2<-lm(cr_rc_cyrm ~ 
             as.factor(cr_mva_se_event)+
-              as.factor(cr_si_trust_neighbor) 
-            + as.factor(cr_si_peoplehelp)+
-              as.factor(cr_edu_abuse)+ 
-              as.factor(list_crgender)+
-              as.factor(cr_vio_safe_travelwork) 
+              as.factor(cr_si_trust_neighbor_REV) 
+            + as.factor(cr_si_peoplehelp_REV)+
+              as.factor(cr_edu_abuse_REV)+ 
+              as.factor(list_crgender)
+              #+as.factor(cr_vio_safe_travelwork_REV) 
               , data=reduced_df )
 summary(multivar_2)
+
+
+#model #3, see if there's any better predictors: top 5 highest loadings
+multivar_3 <- lm(cr_rc_cyrm ~  as.factor(cr_mva_se_handle)+
+                   as.factor(cr_mva_se_prob)+ as.factor(cr_mva_se_solve)
+                    + as.factor(cr_si_peopletrusted)
+                 + as.factor(cr_si_peoplehelp)+ as.factor(cr_si_trust_know)
+                   + as.factor(cr_vio_home_slapparent)
+                   + as.factor(cr_vi_peer_times6) + as.factor(cr_vi_peer_times1)
+                   + as.factor(cr_vio_safe_work)+
+                   as.factor(cr_vio_safe_friend) + as.factor(cr_vio_safe_neighbor)
+                   #as.factor(list_crgender) +as.factor(hh_cs_youngcoh)
+                 , data=reduced_df )
+
+summary(multivar_3)
+
+#multivariate model #4
+multivar_vector<- numeric(ncol(reduced_df))
+reddf_colnames<-colnames(reduced_df) 
+# fill a vector with R squared values from the lm of CYRM~ each column 
+for (i in 1:ncol(reduced_df)){
+  ith_col<-reddf_colnames[i]
+  ith_model<- lm(cr_rc_cyrm~ as.factor(reduced_df[[ith_col]]), data=reduced_df)
+  multivar_vector[i]<- summary(ith_model)$r.squared
+}
+
+rsq_df<-data.frame(reddf_colnames,multivar_vector)
+#filter for the higher R squared values, these predict resilience best
+rsq_df %>% filter(multivar_vector> 0.02)
+                  
+
+#model 4
+multivar_4<- lm(cr_rc_cyrm~ 
+                  as.factor(cr_mva_se_event) 
+                +as.factor(cr_mva_se_handle)
+                + as.factor(cr_mva_se_solut)
+                + as.factor(cr_mva_se_goal)
+                + as.factor(cr_mva_se_situat)
+                +as.factor( cr_si_trust_know_REV) 
+                + as.factor(cr_si_trust_neighbor_REV)
+                + as.factor(cr_si_peoplehelp)
+                + as.factor(cr_si_peopletrusted)
+                + as.factor(cr_vio_safe_makani_REV)
+                + as.factor(cr_vio_safe_relative_REV)
+                + as.factor(cr_vi_peer_times1)
+                + as.factor(cr_hn_gnhlth)
+                
+                , data=reduced_df)
+summary(multivar_4)
+
+
+
+
+#regression based on factor scores (attempt, need to adjust for ordinal data)
+tenth_load<- lavInspect(tenth_cfa_fit, what="std")
+sclslf<- sum(tenth_load$lambda[,1])
+sclslf
+sclwrl<- sum(tenth_load$lambda[,2])
+gnrlth<- sum(tenth_load$lambda[,3])
+gnrlsf<- sum(tenth_load$lambda[,4])
+
+ss1<- tenth_load$lambda[1,1]*reduced_df$cr_mva_opinfriend
+ss2<- tenth_load$lambda[1,2]*reduced_df$cr_mva_se_solve 
+ss3<- tenth_load$lambda[1,3]*reduced_df$cr_mva_se_means 
+sw1<- tenth_load$lambda[2,1]*reduced_df$cr_si_peopletrusted
+sw2 <- tenth_load$lambda[2,1]*reduced_df$cr_si_peoplehelp
+sw3 <- tenth_load$lambda[2,1]*reduced_df$cr_si_trust_neighbor
+
+s1<- ss1+ ss2+ ss3
+s2<- sw1 + sw2 +sw3
+
+test<-lm(reduced_df$cr_rc_cyrm~ s1 + s2)
+summary(test)
+
+
+
