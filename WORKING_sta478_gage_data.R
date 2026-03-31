@@ -6,10 +6,10 @@
 #change on github browser
 
 library(tidyverse)
-library(dplyr)
 library(haven)
 #install.packages("lavaan", dependencies = TRUE)
 library(lavaan)
+library(MASS)
 #read core respondent data
 gage_baseline18 <- read_dta("C:/Users/jporc/OneDrive/Desktop/sta478/gage_jordan_baseline_cr_public_v1.dta")
 #read violence data 
@@ -29,7 +29,7 @@ vio_labels[grep("string", vio_labels, ignore.case = TRUE)]
 #Now make tables with selected variables
 #table 1.1 df social self:
 table_1_1_ss<-gage_baseline18 %>% 
-  select(hhid,cr_hn_scale,
+  dplyr::select(hhid,cr_hn_scale,
          cr_mva_opinfriend, cr_mva_opinionelder,
          cr_mva_opinionbroth,cr_mva_opinionsist,
          cr_mva_se_solve,cr_mva_se_means,
@@ -62,7 +62,7 @@ table_1_1_ss<-table_1_1_ss %>% rowwise() %>%
 
 #table 1.2 df, social world:
 table_1_2_sw<- gage_baseline18 %>%
-  select(hhid, cr_si_diversity,
+  dplyr::select(hhid, cr_si_diversity,
          cr_si_peopletrusted, cr_si_peoplehelp,
          cr_si_threaten,cr_si_othersthreaten,
          cr_si_trust_family,cr_si_trust_neighbor,
@@ -126,11 +126,11 @@ table_1_2_sw<- table_1_2_sw %>% rowwise() %>%
 
 #table 1.3, social safety/threat
 table_1_3_violenceportion<- cr_violence_base %>%
-  select(hhid, cr_vi_peer_times1,cr_vi_peer_times2,
+  dplyr::select(hhid, cr_vi_peer_times1,cr_vi_peer_times2,
          cr_vi_peer_times3, cr_vi_peer_times4,
          cr_vi_peer_times5,cr_vi_peer_times6)
 table_1_3_crportion<- gage_baseline18 %>%
-  select(hhid, cr_si_togetherness,
+  dplyr::select(hhid, cr_si_togetherness,
          cr_vio_safe_friend,cr_vio_safe_neighbor,
          cr_vio_safe_relative,cr_vio_safe_work,
          cr_rc_famsafe,cr_si_friends,cr_si_partsport,
@@ -184,14 +184,14 @@ table_1_3_sst<-table_1_3_sst%>% rowwise() %>%
 
 #table 1.4, non-social safety/threat: (pulling from both data frames)
 table_1_4_cr_portion<- gage_baseline18 %>% 
-  select(hhid, cr_edu_abusetell,
+  dplyr::select(hhid, cr_edu_abusetell,
     cr_vio_safe_home, cr_vio_safe_travelwork,
     cr_vio_safe_market, cr_vio_safe_travelmarket,
     cr_vio_safe_waterfuel,cr_vio_safe_religious,
     cr_vio_safe_makani,cr_edu_trvlsafe,
     cr_edu_schsafe,cr_vio_discipline)
 table_1_4_vio_portion<- cr_violence_base %>%
-  select(hhid, cr_vio_home_yell,
+  dplyr::select(hhid, cr_vio_home_yell,
          cr_vio_home_treatpoorly,cr_vio_home_slapparent,
          cr_vio_home_slapbrother,cr_vio_home_fatherhit,
          cr_vio_home_motherbeaten, cr_edu_abuse,
@@ -245,32 +245,41 @@ table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
                   ifelse(cr_edu_otherabuse==2,1,NA)))
 #table 2, social and geopolitical positioning
 table_2_socgeo<- gage_baseline18 %>%
-  select(hhid,
+  dplyr::select(hhid,
          list_crgender,crmodule_gender,
          list_crage, hh_cs_youngcoh,
          cr_cs_nationality,cr_rc_enoughfood)
 
 #table 3, education and economic empowerment 
 table_3_edueco<- gage_baseline18 %>%
-  select(hhid, cr_edu_attndever,
+  dplyr::select(hhid, cr_edu_attndever,
          cr_edu_neverr,cr_edu_lastattndage,
          cr_edu_highatt,
          cr_edu_stopr,cr_cs_location)
 
 #table 4: Moderators (child and youth resilience measure)
 #contains 28 cr_rc columns 
-table_4_resi <- gage_baseline18 %>% select(hhid, contains("cr_rc"))
+table_4_resi <- gage_baseline18 %>% dplyr::select(hhid, contains("cr_rc"))
 #add in cyrm column:(note, negative values mean at least one question was not answered)
 table_4_resi$cr_rc_cyrm<-rowSums(table_4_resi)- table_4_resi$hhid
 
 
 # table 5: outcomes and treatment
 table_5_outcomes<- gage_baseline18 %>%
-  select(hhid,cr_hn_gnhlth,
+  dplyr::select(hhid,cr_hn_gnhlth,
          cr_crh_worry, cr_crh_control,
          cr_crh_focus,cr_crh_accept,
          cr_crh_friends, cr_hn_injuryyn)
-  
+#reverse scaled column for general self-rated health:
+table_5_outcomes<- table_5_outcomes %>% rowwise() %>%
+  mutate(cr_hn_gnhlth_REV=
+           ifelse(cr_hn_gnhlth==1,5,
+                  ifelse(cr_hn_gnhlth==2,4, 
+                         ifelse(cr_hn_gnhlth==3,3,
+                                ifelse(cr_hn_gnhlth==4,2,
+                                       ifelse(cr_hn_gnhlth==5,1,NA))))))
+                
+
 #All tables merged: (total reduced dataset)
 reduced_df<-table_1_1_ss %>%
   inner_join(table_1_2_sw,by='hhid') %>% 
@@ -803,17 +812,20 @@ multivar_4<- lm(cr_rc_cyrm~
                 + as.factor(cr_mva_se_situat)
                 +as.factor( cr_si_trust_know_REV) 
                 + as.factor(cr_si_trust_neighbor_REV)
-                + as.factor(cr_si_peoplehelp)
-                + as.factor(cr_si_peopletrusted)
+                + as.factor(cr_si_peoplehelp_REV)
+                + as.factor(cr_si_peopletrusted_REV)
                 + as.factor(cr_vio_safe_makani_REV)
                 + as.factor(cr_vio_safe_relative_REV)
                 + as.factor(cr_vi_peer_times1)
-                + as.factor(cr_hn_gnhlth)
-                
+                + as.factor(cr_hn_gnhlth_REV) #making another model for this as well
+                #+ as.factor(list_crgender)
                 , data=reduced_df)
 summary(multivar_4)
 
 
+###test factanal
+columns<- c("cr_mva_se_event","cr_si_trust_know_REV", "cr_mva_se_handle",
+            "cr_si_trust_neighbor_REV","cr_vio_safe_relative_REV"  )
 
 
 #regression based on factor scores (attempt, need to adjust for ordinal data)
@@ -837,5 +849,75 @@ s2<- sw1 + sw2 +sw3
 test<-lm(reduced_df$cr_rc_cyrm~ s1 + s2)
 summary(test)
 
+
+
+
+
+##### ORDINAL LOGISTIC REGRESSION MODEL FOR General Self-Rated Health:
+
+#Attempt 1:
+
+
+#create models with cr_hn_gnhlth_REV against every variable and compare AICs
+#choose variables with lower AICs, try adding these into a multivariate model
+
+#make smaller df bc loop is taking long to run:
+reduced_df2<- reduced_df %>% 
+  dplyr::select(cr_mva_opinfriend, cr_mva_se_solve,cr_mva_se_means, 
+                cr_mva_se_goal,cr_mva_se_event, cr_mva_se_situat, cr_mva_se_prob,
+                cr_mva_se_calm, cr_mva_se_solut, cr_mva_se_trouble, cr_mva_se_handle,
+                cr_rc_opportunities,cr_rc_socialsit, cr_rc_famsafe,  
+                cr_si_peopletrusted, cr_si_peoplehelp, cr_si_trust_neighbor, 
+                cr_si_trust_know,   cr_si_friends, cr_rc_friendsupp, cr_rc_friendtimes, 
+                cr_vi_peer_times1, cr_vi_peer_times2, cr_vi_peer_times3,
+                cr_vi_peer_times4, cr_vi_peer_times5,  cr_vi_peer_times6,
+                cr_vio_home_yell,cr_vio_home_treatpoorly, 
+                cr_vio_home_slapparent,cr_vio_home_slapbrother,
+                cr_vio_home_fatherhit, cr_edu_abuse, cr_edu_otherabuse, cr_edu_punish,
+                cr_vio_safe_friend,cr_vio_safe_neighbor, cr_vio_safe_relative,
+                cr_vio_safe_work, cr_vio_safe_home, cr_vio_safe_travelwork,
+                cr_vio_safe_market,
+                cr_vio_safe_travelmarket, cr_vio_safe_waterfuel,
+                cr_vio_safe_religious, cr_vio_safe_makani, cr_edu_trvlsafe,
+                cr_hn_gnhlth_REV)
+aic_vector<-numeric(ncol(reduced_df2))
+reddf_colnames<-colnames(reduced_df)
+
+
+
+for (i in 1:ncol(reduced_df2)){
+  ith_col<-colnames(reduced_df2)[i]
+  ith_model<- polr(as.factor(cr_hn_gnhlth_REV)~ 
+                     as.factor(reduced_df2[[ith_col]]),
+                               data=reduced_df2)
+  aic_vector[i]<- AIC(ith_model)
+}
+
+
+#
+aic_df<-data.frame(colnames(reduced_df2),aic_vector)
+#filter for the LOWER AIC values, these predict health best
+aic_df %>% filter(aic_vector < 7000)
+
+
+
+#based on the variables with lower AIC:
+health_1<- 
+  polr(as.factor(cr_hn_gnhlth_REV)~ as.factor(cr_mva_se_goal) +
+         as.factor(cr_mva_se_situat)+ as.factor(cr_mva_se_prob)+
+       + as.factor(cr_si_peoplehelp)+ as.factor(cr_si_trust_neighbor_REV) 
+       + as.factor(cr_si_trust_know_REV) 
+       + as.factor(cr_vio_safe_makani_REV)
+       + cr_rc_cyrm
+       #+ as.factor(list_crgender)
+       #+ as.factor(hh_cs_youngcoh)
+       #+ as.factor(cr_cs_nationality)
+       + as.factor(cr_mva_se_means)
+       +as.factor(cr_mva_se_handle)
+       +as.factor(cr_edu_trvlsafe_REV)
+       +as.factor(cr_edu_abuse_REV)
+       , data=reduced_df, Hess=TRUE)
+
+summary(health_1)
 
 
