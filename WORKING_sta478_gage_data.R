@@ -243,6 +243,10 @@ table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
   mutate(cr_edu_otherabuse_REV=
            ifelse(cr_edu_otherabuse==1,2,
                   ifelse(cr_edu_otherabuse==2,1,NA)))
+table_1_4_nsst<- table_1_4_nsst %>% rowwise()%>%
+  mutate(cr_edu_punish_REV=
+           ifelse(cr_edu_punish==1,2,
+                  ifelse(cr_edu_punish==2,1,NA)))
 #table 2, social and geopolitical positioning
 table_2_socgeo<- gage_baseline18 %>%
   dplyr::select(hhid,
