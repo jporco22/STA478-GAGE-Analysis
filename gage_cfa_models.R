@@ -190,6 +190,7 @@ summary(ninth_cfa_fit,fit.measures=T)
 inspect(ninth_cfa_fit, what="std")
 
 #10th CFA, changed factor composition based on EFA results 
+#Note; had to remove "cr_rc" variables, as these cannot be used for the regression model
 tenth_cfa<-'
 social self=~ cr_mva_opinfriend_REV + cr_mva_se_solve +cr_mva_se_means+ 
 cr_mva_se_goal+cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+cr_mva_se_calm+
@@ -197,6 +198,7 @@ cr_mva_se_solut+ cr_mva_se_trouble+ cr_mva_se_handle
 ####+ cr_rc_opportunities+ cr_rc_socialsit+ cr_rc_famsafe
 socialworld=~ cr_si_peopletrusted_REV + cr_si_peoplehelp_REV +
 cr_si_trust_neighbor_REV + cr_si_trust_know_REV +  cr_si_friends_REV
++cr_si_trust_diffrelig_REV + cr_si_trust_diffnation_REV
 ####+ cr_rc_friendsupp + cr_rc_friendtimes 
 generalthreat=~ cr_vi_peer_times1+ cr_vi_peer_times2+cr_vi_peer_times3+
 cr_vi_peer_times4+ cr_vi_peer_times5+  cr_vi_peer_times6+ cr_vio_home_yell+

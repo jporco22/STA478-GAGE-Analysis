@@ -241,7 +241,7 @@ cyrm_lm <- lm(
 
 # View regression results
 summary(cyrm_lm)
-
+confint(cyrm_lm)
 
 
 ####Now create the same model for General Self Rated Health
@@ -256,7 +256,7 @@ health_2<- polr(as.factor(cr_hn_gnhlth_REV)~ socialself + socialworld +
                   generalthreat + generalsafety, Hess=T
                 , data=health_reg_df)
 summary(health_2)
-
+confint(health_2)
 
 # Prediction example
 
@@ -403,3 +403,28 @@ names(new_scores) = c("socialself", "socialworld",  "generalthreat",    "general
 predict(cyrm_lm, new = new_scores)
 #now do same for health
 predict(health_2, new=new_scores)
+
+
+# Generate predictions for the existing sample to examine goodness of fit #
+###########################################################################
+# # These are fitted/predicted values for the rows used in the regression.
+# 
+reg_df$predicted_cr_rc_cyrm <- predict(cyrm_lm, newdata = reg_df)
+# 
+# # Look at first few observed vs predicted values
+reg_df %>% dplyr::select(hhid, cr_rc_cyrm, predicted_cr_rc_cyrm)
+# 
+# anova(cyrm_lm)
+# 
+# # # Optional diagnostics
+# # par(mfrow = c(2, 2))
+# # plot(cyrm_lm)
+# # par(mfrow = c(1, 1))
+# 
+
+
+###FOR health
+health_reg_df$predicted_gn_health <- predict(health_2, newdata = health_reg_df)
+# 
+# # Look at first few observed vs predicted values
+health_reg_df %>% dplyr::select(hhid, cr_hn_gnhlth_REV, predicted_gn_health)
