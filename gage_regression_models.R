@@ -2,193 +2,29 @@
 ### By: Julia Porco
 
 source("C:/Users/jporc/STA478-GAGE-Analysis/gage_data_cleaning.R")
-####Multivariate regression for predicting Resilience(CYRM)
-
-lavInspect(tenth_cfa_fit, what="std") 
-#choose 3 variables with highest loadings from each factor
-
-##social self
-#cr_mva_se_situat, cr_mva_se_solut, cr_mva_se_event  
-##social world
-# cr_si_trust_neighbor + cr_si_peopletrusted + cr_si_peoplehelp
-## general threat
-#cr_edu_abuse, cr_vi_peer_times4, cr_edu_otherabuse
-##general safety
-#cr_vio_safe_travelmarket, cr_vio_safe_market, cr_vio_safe_travelwork    
-# list_crgender, hh_cs_youngcoh, cr_rc_cyrm
-
-#multivariate model #1
-multivar_1 <- lm(cr_rc_cyrm ~ as.factor(cr_mva_se_situat)+ as.factor(cr_mva_se_solut)
-                 + as.factor(cr_mva_se_event)+
-                   as.factor(cr_si_trust_neighbor_REV) + as.factor(cr_si_peopletrusted_REV)
-                 + as.factor(cr_si_peoplehelp_REV)+
-                   as.factor(cr_edu_abuse_REV)+ as.factor(cr_vi_peer_times4)+
-                   as.factor(cr_edu_otherabuse_REV)+
-                   as.factor(cr_vio_safe_travelmarket_REV)+ as.factor(cr_vio_safe_market_REV)+
-                   as.factor(cr_vio_safe_travelwork_REV)+ 
-                   as.factor(list_crgender) +as.factor(hh_cs_youngcoh), data=reduced_df )
-
-summary(multivar_1)
-
-#model #2, remove variables with no significant correlation
-multivar_2<-lm(cr_rc_cyrm ~ 
-                 as.factor(cr_mva_se_event)+
-                 as.factor(cr_si_trust_neighbor_REV) 
-               + as.factor(cr_si_peoplehelp_REV)+
-                 as.factor(cr_edu_abuse_REV)+ 
-                 as.factor(list_crgender)
-               #+as.factor(cr_vio_safe_travelwork_REV) 
-               , data=reduced_df )
-summary(multivar_2)
-
-
-#model #3, see if there's any better predictors: top 5 highest loadings
-multivar_3 <- lm(cr_rc_cyrm ~  as.factor(cr_mva_se_handle)+
-                   as.factor(cr_mva_se_prob)+ as.factor(cr_mva_se_solve)
-                 + as.factor(cr_si_peopletrusted)
-                 + as.factor(cr_si_peoplehelp)+ as.factor(cr_si_trust_know)
-                 + as.factor(cr_vio_home_slapparent)
-                 + as.factor(cr_vi_peer_times6) + as.factor(cr_vi_peer_times1)
-                 + as.factor(cr_vio_safe_work)+
-                   as.factor(cr_vio_safe_friend) + as.factor(cr_vio_safe_neighbor)
-                 #as.factor(list_crgender) +as.factor(hh_cs_youngcoh)
-                 , data=reduced_df )
-
-summary(multivar_3)
-
-#multivariate model #4
-multivar_vector<- numeric(ncol(reduced_df))
-reddf_colnames<-colnames(reduced_df) 
-# fill a vector with R squared values from the lm of CYRM~ each column 
-for (i in 1:ncol(reduced_df)){
-  ith_col<-reddf_colnames[i]
-  ith_model<- lm(cr_rc_cyrm~ as.factor(reduced_df[[ith_col]]), data=reduced_df)
-  multivar_vector[i]<- summary(ith_model)$r.squared
-}
-
-rsq_df<-data.frame(reddf_colnames,multivar_vector)
-#filter for the higher R squared values, these predict resilience best
-rsq_df %>% filter(multivar_vector> 0.02)
-
-
-#model 4
-multivar_4<- lm(cr_rc_cyrm~ 
-                  as.factor(cr_mva_se_event) 
-                +as.factor(cr_mva_se_handle)
-                + as.factor(cr_mva_se_solut)
-                + as.factor(cr_mva_se_goal)
-                + as.factor(cr_mva_se_situat)
-                +as.factor( cr_si_trust_know_REV) 
-                + as.factor(cr_si_trust_neighbor_REV)
-                + as.factor(cr_si_peoplehelp_REV)
-                + as.factor(cr_si_peopletrusted_REV)
-                + as.factor(cr_vio_safe_makani_REV)
-                + as.factor(cr_vio_safe_relative_REV)
-                + as.factor(cr_vi_peer_times1)
-                + as.factor(cr_hn_gnhlth_REV) #making another model for this as well
-                #+ as.factor(list_crgender)
-                , data=reduced_df)
-summary(multivar_4)
-
-
-###test factanal
-columns<- c("cr_mva_se_event","cr_si_trust_know_REV", "cr_mva_se_handle",
-            "cr_si_trust_neighbor_REV","cr_vio_safe_relative_REV"  )
-
-
-#regression based on factor scores (attempt, need to adjust for ordinal data)
-tenth_load<- lavInspect(tenth_cfa_fit, what="std")
-sclslf<- sum(tenth_load$lambda[,1])
-sclslf
-sclwrl<- sum(tenth_load$lambda[,2])
-gnrlth<- sum(tenth_load$lambda[,3])
-gnrlsf<- sum(tenth_load$lambda[,4])
-
-ss1<- tenth_load$lambda[1,1]*reduced_df$cr_mva_opinfriend
-ss2<- tenth_load$lambda[1,2]*reduced_df$cr_mva_se_solve 
-ss3<- tenth_load$lambda[1,3]*reduced_df$cr_mva_se_means 
-sw1<- tenth_load$lambda[2,1]*reduced_df$cr_si_peopletrusted
-sw2 <- tenth_load$lambda[2,1]*reduced_df$cr_si_peoplehelp
-sw3 <- tenth_load$lambda[2,1]*reduced_df$cr_si_trust_neighbor
-
-s1<- ss1+ ss2+ ss3
-s2<- sw1 + sw2 +sw3
-
-test<-lm(reduced_df$cr_rc_cyrm~ s1 + s2)
-summary(test)
-
-
-
-
-
-##### ORDINAL LOGISTIC REGRESSION MODEL FOR General Self-Rated Health:
-
-#Attempt 1:
-
-
-#create models with cr_hn_gnhlth_REV against every variable and compare AICs
-#choose variables with lower AICs, try adding these into a multivariate model
-
-#make smaller df bc loop is taking long to run:
-reduced_df2<- reduced_df %>% 
-  dplyr::select(cr_mva_opinfriend, cr_mva_se_solve,cr_mva_se_means, 
-                cr_mva_se_goal,cr_mva_se_event, cr_mva_se_situat, cr_mva_se_prob,
-                cr_mva_se_calm, cr_mva_se_solut, cr_mva_se_trouble, cr_mva_se_handle,
-                cr_rc_opportunities,cr_rc_socialsit, cr_rc_famsafe,  
-                cr_si_peopletrusted, cr_si_peoplehelp, cr_si_trust_neighbor, 
-                cr_si_trust_know,   cr_si_friends, cr_rc_friendsupp, cr_rc_friendtimes, 
-                cr_vi_peer_times1, cr_vi_peer_times2, cr_vi_peer_times3,
-                cr_vi_peer_times4, cr_vi_peer_times5,  cr_vi_peer_times6,
-                cr_vio_home_yell,cr_vio_home_treatpoorly, 
-                cr_vio_home_slapparent,cr_vio_home_slapbrother,
-                cr_vio_home_fatherhit, cr_edu_abuse, cr_edu_otherabuse, cr_edu_punish,
-                cr_vio_safe_friend,cr_vio_safe_neighbor, cr_vio_safe_relative,
-                cr_vio_safe_work, cr_vio_safe_home, cr_vio_safe_travelwork,
-                cr_vio_safe_market,
-                cr_vio_safe_travelmarket, cr_vio_safe_waterfuel,
-                cr_vio_safe_religious, cr_vio_safe_makani, cr_edu_trvlsafe,
-                cr_hn_gnhlth_REV)
-aic_vector<-numeric(ncol(reduced_df2))
-reddf_colnames<-colnames(reduced_df)
-
-
-
-for (i in 1:ncol(reduced_df2)){
-  ith_col<-colnames(reduced_df2)[i]
-  ith_model<- polr(as.factor(cr_hn_gnhlth_REV)~ 
-                     as.factor(reduced_df2[[ith_col]]),
-                   data=reduced_df2)
-  aic_vector[i]<- AIC(ith_model)
-}
-
-
-#
-aic_df<-data.frame(colnames(reduced_df2),aic_vector)
-#filter for the LOWER AIC values, these predict health best
-aic_df %>% filter(aic_vector < 7000)
-
-
-
-#based on the variables with lower AIC:
-health_1<- 
-  polr(as.factor(cr_hn_gnhlth_REV)~ as.factor(cr_mva_se_goal) +
-         as.factor(cr_mva_se_situat)+ as.factor(cr_mva_se_prob)+
-         + as.factor(cr_si_peoplehelp)+ as.factor(cr_si_trust_neighbor_REV) 
-       + as.factor(cr_si_trust_know_REV) 
-       + as.factor(cr_vio_safe_makani_REV)
-       + cr_rc_cyrm
-       #+ as.factor(list_crgender)
-       #+ as.factor(hh_cs_youngcoh)
-       #+ as.factor(cr_cs_nationality)
-       + as.factor(cr_mva_se_means)
-       +as.factor(cr_mva_se_handle)
-       +as.factor(cr_edu_trvlsafe_REV)
-       +as.factor(cr_edu_abuse_REV)
-       , data=reduced_df, Hess=TRUE)
-
-summary(health_1)
-
-
+library(DescTools)
+#Run this:
+#run this:
+tenth_cfa<-'
+social self=~ cr_mva_opinfriend_REV + cr_mva_se_solve +cr_mva_se_means+ 
+cr_mva_se_goal+cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+cr_mva_se_calm+
+cr_mva_se_solut+ cr_mva_se_trouble+ cr_mva_se_handle
+####+ cr_rc_opportunities+ cr_rc_socialsit+ cr_rc_famsafe
+socialworld=~ cr_si_peopletrusted_REV + cr_si_peoplehelp_REV +
+cr_si_trust_neighbor_REV + cr_si_trust_know_REV +  cr_si_friends_REV
++cr_si_trust_diffrelig_REV + cr_si_trust_diffnation_REV
+####+ cr_rc_friendsupp + cr_rc_friendtimes 
+generalthreat=~ cr_vi_peer_times1+ cr_vi_peer_times2+cr_vi_peer_times3+
+cr_vi_peer_times4+ cr_vi_peer_times5+  cr_vi_peer_times6+ cr_vio_home_yell+
+cr_vio_home_treatpoorly+cr_vio_home_slapparent+cr_vio_home_slapbrother+
+cr_vio_home_fatherhit+cr_edu_abuse_REV + cr_edu_otherabuse_REV+ cr_edu_punish_REV
+generalsafety=~ cr_vio_safe_friend_REV +cr_vio_safe_neighbor_REV
++ cr_vio_safe_relative_REV +cr_vio_safe_work_REV + cr_vio_safe_home_REV 
++cr_vio_safe_travelwork_REV + cr_vio_safe_market_REV +cr_vio_safe_travelmarket_REV
++ cr_vio_safe_waterfuel_REV+ cr_vio_safe_religious_REV + 
+cr_vio_safe_makani_REV + cr_edu_trvlsafe_REV
+'
+tenth_cfa_fit<-cfa(tenth_cfa,data=reduced_df, ordered=T, missing='pairwise')
 
 
 ###Code from Nishan Mudalige:
@@ -257,6 +93,21 @@ health_2<- polr(as.factor(cr_hn_gnhlth_REV)~ socialself + socialworld +
                 , data=health_reg_df)
 summary(health_2)
 confint(health_2)
+#for cutoff values, need to manually compute 95% CI:
+health_2_output<- coef(summary(health_2))
+lower<-numeric(4)
+upper<-numeric(4)
+cutoff_CI<- data.frame(lower,upper)
+for (i in 1:4){
+  cutoff_CI$lower[i]<- 
+    health_2_output[i+4,1] - 1.96*health_2_output[i+4,2]
+  cutoff_CI$upper[i]<- 
+    health_2_output[i+4,1] + 1.96*health_2_output[i+4,2]
+}
+cutoff_CI
+#Pseudo R^2 values for health model:
+DescTools::PseudoR2(health_2, which = "all")
+
 
 # Prediction example
 
@@ -428,3 +279,6 @@ health_reg_df$predicted_gn_health <- predict(health_2, newdata = health_reg_df)
 # 
 # # Look at first few observed vs predicted values
 health_reg_df %>% dplyr::select(hhid, cr_hn_gnhlth_REV, predicted_gn_health)
+
+
+
