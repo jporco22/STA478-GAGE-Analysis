@@ -4,7 +4,6 @@
 source("C:/Users/jporc/STA478-GAGE-Analysis/gage_data_cleaning.R")
 library(DescTools)
 #Run this:
-#run this:
 tenth_cfa<-'
 social self=~ cr_mva_opinfriend_REV + cr_mva_se_solve +cr_mva_se_means+ 
 cr_mva_se_goal+cr_mva_se_event+ cr_mva_se_situat+ cr_mva_se_prob+cr_mva_se_calm+
@@ -53,7 +52,8 @@ names(factor_scores_df) = c("socialself", "socialworld", "generalthreat", "gener
 # drop_na() removes rows with missing values in outcome or predictors.
 
 reg_df <- reduced_df %>%
-  dplyr::select(hhid, cr_rc_cyrm) %>%
+  dplyr::select(hhid, cr_rc_cyrm,  hh_cs_youngcoh, list_crgender, cr_cs_location,
+                cr_cs_nationality) %>%
   bind_cols(factor_scores_df) %>%
   drop_na()
 
@@ -67,11 +67,15 @@ names(reg_df)
 
 # Regression model
 # Response: cr_rc_cyrm
-# Covariates: socialself + socialworld + generalthreat + generalsafety
+# Covariates: socialself + socialworld + generalthreat + generalsafety +
+     #agecohort + gender
 # The covariate values are estimated from the factor analysis
 
 cyrm_lm <- lm(
-  cr_rc_cyrm ~ socialself + socialworld + generalthreat + generalsafety,
+  cr_rc_cyrm ~ socialself + socialworld + generalthreat + generalsafety+
+    + as.factor(hh_cs_youngcoh)+ as.factor(list_crgender),
+  #+as.factor(cr_cs_nationality)
+  #+as.factor(cr_cs_location),
   data = reg_df
 )
 
@@ -84,12 +88,17 @@ confint(cyrm_lm)
 #Must use ordinal logistic regression
 
 health_reg_df<- reduced_df %>%
-  dplyr::select(hhid, cr_hn_gnhlth_REV) %>%
+  dplyr::select(hhid, cr_hn_gnhlth_REV, hh_cs_youngcoh, list_crgender,
+                cr_cs_nationality, cr_cs_location) %>%
   bind_cols(factor_scores_df) %>%
   drop_na()
 
 health_2<- polr(as.factor(cr_hn_gnhlth_REV)~ socialself + socialworld + 
-                  generalthreat + generalsafety, Hess=T
+                  generalthreat + generalsafety + as.factor(hh_cs_youngcoh)
+                + as.factor(list_crgender) 
+                #+as.factor(cr_cs_nationality)
+                #+as.factor(cr_cs_location)
+                , Hess=T
                 , data=health_reg_df)
 summary(health_2)
 confint(health_2)
@@ -100,17 +109,16 @@ upper<-numeric(4)
 cutoff_CI<- data.frame(lower,upper)
 for (i in 1:4){
   cutoff_CI$lower[i]<- 
-    health_2_output[i+4,1] - 1.96*health_2_output[i+4,2]
+    health_2_output[i+6,1] - 1.96*health_2_output[i+4,2]
   cutoff_CI$upper[i]<- 
-    health_2_output[i+4,1] + 1.96*health_2_output[i+4,2]
+    health_2_output[i+6,1] + 1.96*health_2_output[i+4,2]
 }
 cutoff_CI
 #Pseudo R^2 values for health model:
 DescTools::PseudoR2(health_2, which = "all")
 
 
-# Prediction example
-
+# Prediction example:
 new_person <- data.frame(
   # social self
   cr_mva_opinfriend_REV = 1,
@@ -233,13 +241,16 @@ if ("hhid" %in% names(new_person)) {
 # --------------------------------------------------
 augmented_data <- bind_rows(reduced_df, new_person)
 
+
+
 # --------------------------------------------------
 # 4. Compute factor scores on the augmented dataset
 # --------------------------------------------------
-all_scores <- lavPredict(tenth_cfa_fit, newdata = augmented_data[3500:4102, ])
+all_scores <- lavPredict(tenth_cfa_fit, newdata = augmented_data[3500:4102, ] 
+                         )
 
 # Convert to data frame for convenience
-all_scores_df <- as.data.frame(all_scores)
+all_scores_df <- as.data.frame(all_scores) 
 
 # --------------------------------------------------
 # 5. Extract the scores for the new person (last row)
@@ -274,7 +285,7 @@ reg_df %>% dplyr::select(hhid, cr_rc_cyrm, predicted_cr_rc_cyrm)
 # 
 
 
-###FOR health
+###Same for the health model:
 health_reg_df$predicted_gn_health <- predict(health_2, newdata = health_reg_df)
 # 
 # # Look at first few observed vs predicted values
@@ -282,3 +293,44 @@ health_reg_df %>% dplyr::select(hhid, cr_hn_gnhlth_REV, predicted_gn_health)
 
 
 
+
+###Looking into Over and Under predicted CYRM:
+quantile(reg_df$resids, c(0.05, 0.95))
+over_pred_cyrm_hhid<- reg_df %>% filter(resids<= -10.21896) %>% pull(hhid)
+under_pred_cyrm_hhid<- reg_df %>% filter(resids>= 7.79411) %>% pull(hhid)
+over_pred_cyrm<-reduced_df %>% filter(hhid %in% over_pred_cyrm_hhid)
+under_pred_cyrm<-reduced_df %>% filter(hhid %in% under_pred_cyrm_hhid)
+
+#no differences in gender:
+table(under_pred_cyrm$list_crgender, useNA="ifany")
+table(over_pred_cyrm$list_crgender, useNA="ifany")
+
+#Appears that Younger cohort has lower predicted Resilience and vice versa
+table(under_pred_cyrm$hh_cs_youngcoh, useNA="ifany")
+table(over_pred_cyrm$hh_cs_youngcoh, useNA="ifany")
+#confirm with fisher's exact test:
+contingency_tab<- cbind(c(146,48), c(81,113))
+fisher.test(contingency_tab)
+
+#no differences between nationalities;roughly expected distribution:
+table(under_pred_cyrm$cr_cs_nationality, useNA="ifany")
+table(over_pred_cyrm$cr_cs_nationality, useNA="ifany")
+
+#no differences in location/living situation:
+table(under_pred_cyrm$cr_cs_location, useNA="ifany")
+table(over_pred_cyrm$cr_cs_location, useNA="ifany")
+
+
+
+####SRH model- confusion matrix:
+
+predicted_correct_SRH<- health_reg_df %>% 
+  filter(cr_hn_gnhlth_REV==predicted_gn_health)
+predicted_correct_SRH %>% filter(cr_hn_gnhlth_REV %in% c(1,2,3)) %>% nrow()
+predicted_correct_SRH %>% filter(cr_hn_gnhlth_REV %in% c(4,5)) %>% nrow()
+
+predicted_incorrect_SRH<- health_reg_df %>% 
+  filter(cr_hn_gnhlth_REV!=predicted_gn_health)
+predicted_incorrect_SRH %>% filter(cr_hn_gnhlth_REV %in% c(1,2,3)) %>% nrow()
+predicted_incorrect_SRH %>% filter(cr_hn_gnhlth_REV %in% c(4,5)) %>% nrow()
+  

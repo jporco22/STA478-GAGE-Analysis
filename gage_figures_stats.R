@@ -60,7 +60,6 @@ ggplot(data = reg_df,
        x = "Actual CYRM",
        y = "Predicted CYRM") +
   theme_minimal()
-
 #Density plot: CYRM:
 ggplot(data=reg_df)+
   geom_density(aes(x=cr_rc_cyrm, fill="red", alpha=0.3))+
@@ -85,7 +84,8 @@ ggplot(data = health_reg_df,
 
 #residual plots for health model:
 health_reg_df$resids<- 
-  as.numeric(cr_hn_gnhlth_REV)-as.numeric(health_reg_df$predicted_gn_health)
+  as.numeric(health_reg_df$cr_hn_gnhlth_REV)-
+  as.numeric(health_reg_df$predicted_gn_health)
 
 ggplot(health_reg_df, aes(x =predicted_gn_health,y =resids)) +
   geom_count() +
@@ -113,21 +113,9 @@ ggplot(health_reg_df)+
 
 
 
-#Looking into Over and Under predicted CYRM:
-quantile(reg_df$resids, c(0.05, 0.95))
-over_pred_cyrm_hhid<- reg_df %>% filter(resids<= -10.528292) %>% pull(hhid)
-under_pred_cyrm_hhid<- reg_df %>% filter(resids>= 7.924322) %>% pull(hhid)
-over_pred_cyrm<-reduced_df %>% filter(hhid %in% over_pred_cyrm_hhid)
-under_pred_cyrm<-reduced_df %>% filter(hhid %in% under_pred_cyrm_hhid)
 
-#no differences in gender:
-table(under_pred_cyrm$list_crgender, useNA="ifany")
-table(over_pred_cyrm$list_crgender, useNA="ifany")
 
-#Appears that Younger cohort has lower predicted Resilience and vice versa
-table(under_pred_cyrm$hh_cs_youngcoh, useNA="ifany")
-table(over_pred_cyrm$hh_cs_youngcoh, useNA="ifany")
-#confirm with fisher's exact test:
-contingency_tab<- cbind(c(146,48), c(81,113))
-fisher.test(contingency_tab)
-
+h<- reduced_df %>% filter(hh_cs_youngcoh==1) 
+hist(h$cr_rc_cyrm)
+old<-reduced_df %>% filter(hh_cs_youngcoh==2) 
+hist(old$cr_rc_cyrm)

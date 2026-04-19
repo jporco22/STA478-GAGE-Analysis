@@ -189,6 +189,9 @@ ninth_cfa_fit<-cfa(ninth_cfa,data=reduced_df,ordered=T,
 summary(ninth_cfa_fit,fit.measures=T)
 inspect(ninth_cfa_fit, what="std")
 
+
+
+####FINAL CFA MODEL:
 #10th CFA, changed factor composition based on EFA results 
 #Note; had to remove "cr_rc" variables, as these cannot be used for the regression model
 tenth_cfa<-'
