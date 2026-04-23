@@ -15,12 +15,12 @@ cr_violence_base<- read_dta("C:/Users/jporc/OneDrive/Desktop/sta478/GAGE_Jordan_
 cr_labels <- sapply(gage_baseline18, function(x) attr(x, "label"))
 cat(attr(gage_baseline18$cr_crh_control, "label"))
 #Find labels containing a specific string:
-cr_labels[grep("injur", cr_labels, ignore.case = TRUE)]
+cr_labels[grep("reasonably", cr_labels, ignore.case = TRUE)]
 
 #Create vector of column labels for violence data:
 vio_labels<-sapply(cr_violence_base, function(x) attr(x, "label"))
 #Find labels containing a string (violence data):
-vio_labels[grep("string", vio_labels, ignore.case = TRUE)]
+vio_labels[grep("GHQ", vio_labels, ignore.case = TRUE)]
 
 #Now make tables with selected variables
 #table 1.1 df social self:
@@ -249,6 +249,12 @@ table_2_socgeo<- gage_baseline18 %>%
                 list_crgender,crmodule_gender,
                 list_crage, hh_cs_youngcoh,
                 cr_cs_nationality,cr_rc_enoughfood)
+#collapse nationality into smaller # of categories:
+table_2_socgeo$nationality_collapsed<-
+  ifelse(table_2_socgeo$cr_cs_nationality==1,1,
+         ifelse(table_2_socgeo$cr_cs_nationality==2,2,
+                3))
+
 
 #table 3, education and economic empowerment 
 table_3_edueco<- gage_baseline18 %>%
@@ -279,6 +285,13 @@ table_5_outcomes<- table_5_outcomes %>% rowwise() %>%
                                 ifelse(cr_hn_gnhlth==4,2,
                                        ifelse(cr_hn_gnhlth==5,1,NA))))))
 
+#table 6: GHQ (general health questionnaire) 12 questions
+table_6_ghq<- gage_baseline18 %>%
+  dplyr::select(hhid, cr_pmh_ghq_concen, cr_pmh_ghq_sleep, cr_pmh_ghq_useful,
+                cr_pmh_ghq_capable, cr_pmh_ghq_strain, cr_pmh_ghq_overcome,
+                cr_pmh_ghq_enjoy, cr_pmh_ghq_face, cr_pmh_ghq_unhappy,
+                cr_pmh_ghq_confid, cr_pmh_ghq_worthless, cr_pmh_ghq_happy)
+table_6_ghq$ghq_SUM<- rowSums(table_6_ghq)- table_6_ghq$hhid
 
 #All tables merged: (total reduced dataset)
 reduced_df<-table_1_1_ss %>%
@@ -288,7 +301,8 @@ reduced_df<-table_1_1_ss %>%
   inner_join(table_2_socgeo,by='hhid') %>%
   inner_join(table_3_edueco,by='hhid') %>%
   inner_join(table_4_resi,by='hhid',suffix=c("", "_duplic")) %>%
-  inner_join(table_5_outcomes,by='hhid')
+  inner_join(table_5_outcomes,by='hhid') %>%
+  inner_join(table_6_ghq, by= 'hhid')
 #Table 4 has overlap with other tables, label them as duplicates
 #turn negative values to NAs so lavaan can understand:
 reduced_df[reduced_df<0]<-NA

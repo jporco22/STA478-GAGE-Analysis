@@ -53,7 +53,7 @@ names(factor_scores_df) = c("socialself", "socialworld", "generalthreat", "gener
 
 reg_df <- reduced_df %>%
   dplyr::select(hhid, cr_rc_cyrm,  hh_cs_youngcoh, list_crgender, cr_cs_location,
-                cr_cs_nationality) %>%
+                nationality_collapsed) %>%
   bind_cols(factor_scores_df) %>%
   drop_na()
 
@@ -73,9 +73,9 @@ names(reg_df)
 
 cyrm_lm <- lm(
   cr_rc_cyrm ~ socialself + socialworld + generalthreat + generalsafety+
-    + as.factor(hh_cs_youngcoh)+ as.factor(list_crgender),
-  #+as.factor(cr_cs_nationality)
-  #+as.factor(cr_cs_location),
+    + as.factor(hh_cs_youngcoh)+ as.factor(list_crgender)
+  +as.factor(nationality_collapsed)
+  +as.factor(cr_cs_location),
   data = reg_df
 )
 
@@ -89,14 +89,14 @@ confint(cyrm_lm)
 
 health_reg_df<- reduced_df %>%
   dplyr::select(hhid, cr_hn_gnhlth_REV, hh_cs_youngcoh, list_crgender,
-                cr_cs_nationality, cr_cs_location) %>%
+                nationality_collapsed, cr_cs_location) %>%
   bind_cols(factor_scores_df) %>%
   drop_na()
 
 health_2<- polr(as.factor(cr_hn_gnhlth_REV)~ socialself + socialworld + 
                   generalthreat + generalsafety + as.factor(hh_cs_youngcoh)
                 + as.factor(list_crgender) 
-                #+as.factor(cr_cs_nationality)
+                #+as.factor(nationality_collapsed)
                 #+as.factor(cr_cs_location)
                 , Hess=T
                 , data=health_reg_df)
@@ -333,4 +333,94 @@ predicted_incorrect_SRH<- health_reg_df %>%
   filter(cr_hn_gnhlth_REV!=predicted_gn_health)
 predicted_incorrect_SRH %>% filter(cr_hn_gnhlth_REV %in% c(1,2,3)) %>% nrow()
 predicted_incorrect_SRH %>% filter(cr_hn_gnhlth_REV %in% c(4,5)) %>% nrow()
-  
+
+
+
+###New attempt for health model:
+###SRH collapsing categories 1,2,3:
+health_reg_df$SRH_test_col<- ifelse(health_reg_df$cr_hn_gnhlth_REV %in% c(1,2,3), 3,
+                                    health_reg_df$cr_hn_gnhlth_REV )
+
+health_reg_df$SRH_test_col<- ifelse(health_reg_df$SRH_test_col==3,1,
+                                    ifelse(health_reg_df$SRH_test_col==4,2,
+                                           3))
+
+#create weights vector based on frequencies of each category
+tab<-1/table(health_reg_df$SRH_test_col)
+#playing around with weights
+weights_vec<-ifelse(health_reg_df$SRH_test_col==1, 0.44,
+                    ifelse(health_reg_df$SRH_test_col==2, 0.28,
+                           0.28 ))
+
+health_3<- polr(as.factor(SRH_test_col)~ socialself + socialworld + 
+                  generalthreat + generalsafety + as.factor(hh_cs_youngcoh)
+                + as.factor(list_crgender) 
+                #+as.factor(cr_cs_nationality)
+                #+as.factor(cr_cs_location)
+                ,weights=weights_vec ,Hess=T
+                , data=health_reg_df)
+summary(health_3)
+
+health_reg_df$predicted_gn_health <- predict(health_3, newdata = health_reg_df)
+# 
+# # Look at first few observed vs predicted values
+health_reg_df %>% dplyr::select(hhid, SRH_test_col, predicted_gn_health)
+#look at density:
+ggplot(health_reg_df)+
+  geom_bar(aes(x=as.numeric(SRH_test_col)), fill="red", alpha=0.3)+
+  geom_bar(aes(x=as.numeric(predicted_gn_health)), fill="blue", alpha=0.3)+
+  labs(title = "Actual vs. Predicted SRH Density", x = "SRH", y = "Frequency")
+
+
+#Can we use weights with all 5 SRH categories??
+weights_vec<- 
+  ifelse(health_reg_df$cr_hn_gnhlth_REV==1,0.30,
+         ifelse(health_reg_df$cr_hn_gnhlth_REV==2,0.30,
+                ifelse(health_reg_df$cr_hn_gnhlth_REV==3,0.20,
+                       ifelse(health_reg_df$cr_hn_gnhlth_REV==4,0.10,
+                              0.10))))
+health_4<- polr(as.factor(cr_hn_gnhlth_REV)~ socialself + socialworld + 
+                  generalthreat + generalsafety + as.factor(hh_cs_youngcoh)
+                + as.factor(list_crgender) 
+                +as.factor(nationality_collapsed)
+                +as.factor(cr_cs_location)
+                ,weights=weights_vec ,Hess=T
+                , data=health_reg_df)
+health_reg_df$predicted_gn_health <- predict(health_4, newdata = health_reg_df)
+#look at density:
+ggplot(health_reg_df)+
+  geom_bar(aes(x=as.numeric(cr_hn_gnhlth_REV)), fill="red", alpha=0.3)+
+  geom_bar(aes(x=as.numeric(predicted_gn_health)), fill="blue", alpha=0.3)+
+  labs(title = "Actual vs. Predicted SRH Density", x = "SRH", y = "Frequency")
+
+table(health_reg_df$predicted_gn_health, useNA="ifany")
+table(health_reg_df$cr_hn_gnhlth_REV, useNA="ifany")
+
+
+
+
+###NEW: GHQ Regression Model- Linear Multivariate
+ghq_reg_df <- reduced_df %>%
+  dplyr::select(hhid, ghq_SUM,  hh_cs_youngcoh, list_crgender, cr_cs_location,
+                nationality_collapsed) %>%
+  bind_cols(factor_scores_df) %>%
+  drop_na()
+
+ghq_lm <- lm(
+  ghq_SUM ~ socialself + socialworld + generalthreat + generalsafety+
+    + as.factor(hh_cs_youngcoh)+ as.factor(list_crgender)
+  +as.factor(nationality_collapsed)
+  +as.factor(cr_cs_location),
+  data = ghq_reg_df
+)
+
+summary(ghq_lm)
+confint(ghq_lm)
+
+#Predicting GHQ with our model:
+ghq_reg_df$predicted_GHQ <- predict(ghq_lm, newdata = ghq_reg_df)
+#Predicted vs Actual GHQ Densities:
+ggplot(data=ghq_reg_df)+
+  geom_density(aes(x=ghq_SUM, fill="red", alpha=0.3))+
+  geom_density(aes(x=predicted_GHQ, fill="blue", alpha=0.3))+
+  labs(title = "Actual vs. Predicted GHQ Density Plot", x = "GHQ", y = "Density") 

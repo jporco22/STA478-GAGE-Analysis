@@ -106,7 +106,7 @@ print(h, n=700)
 
 #overlayed density for SRH
 ggplot(health_reg_df)+
-  geom_bar(aes(x=as.numeric(cr_hn_gnhlth_REV)), fill="red", alpha=0.3)+
+  geom_bar(aes(x=as.numeric(SRH_test_col)), fill="red", alpha=0.3)+
   geom_bar(aes(x=as.numeric(predicted_gn_health)), fill="blue", alpha=0.3)+
   labs(title = "Actual vs. Predicted SRH Density", x = "SRH", y = "Frequency")
 
