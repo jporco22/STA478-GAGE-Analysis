@@ -215,7 +215,7 @@ cr_vio_safe_makani_REV + cr_edu_trvlsafe_REV
 '
 tenth_cfa_fit<-cfa(tenth_cfa,data=reduced_df, ordered=T, missing='pairwise')
 summary(tenth_cfa_fit, fit.measures=T)
-lavInspect(tenth_cfa_fit, what="std")
+lavInspect(tenth_cfa_fit, what="std")$lambda
 
 #For paper: "Model A"- show what happens with everything
 model_a_cfa<-'socialself=~cr_hn_scale+ cr_mva_opinfriend+ cr_mva_opinionelder+

@@ -84,38 +84,6 @@ summary(cyrm_lm)
 confint(cyrm_lm)
 
 
-####Now create the same model for General Self Rated Health
-#Must use ordinal logistic regression
-
-health_reg_df<- reduced_df %>%
-  dplyr::select(hhid, cr_hn_gnhlth_REV, hh_cs_youngcoh, list_crgender,
-                nationality_collapsed, cr_cs_location) %>%
-  bind_cols(factor_scores_df) %>%
-  drop_na()
-
-health_2<- polr(as.factor(cr_hn_gnhlth_REV)~ socialself + socialworld + 
-                  generalthreat + generalsafety + as.factor(hh_cs_youngcoh)
-                + as.factor(list_crgender) 
-                #+as.factor(nationality_collapsed)
-                #+as.factor(cr_cs_location)
-                , Hess=T
-                , data=health_reg_df)
-summary(health_2)
-confint(health_2)
-#for cutoff values, need to manually compute 95% CI:
-health_2_output<- coef(summary(health_2))
-lower<-numeric(4)
-upper<-numeric(4)
-cutoff_CI<- data.frame(lower,upper)
-for (i in 1:4){
-  cutoff_CI$lower[i]<- 
-    health_2_output[i+6,1] - 1.96*health_2_output[i+4,2]
-  cutoff_CI$upper[i]<- 
-    health_2_output[i+6,1] + 1.96*health_2_output[i+4,2]
-}
-cutoff_CI
-#Pseudo R^2 values for health model:
-DescTools::PseudoR2(health_2, which = "all")
 
 
 # Prediction example:
@@ -285,58 +253,16 @@ reg_df %>% dplyr::select(hhid, cr_rc_cyrm, predicted_cr_rc_cyrm)
 # 
 
 
-###Same for the health model:
-health_reg_df$predicted_gn_health <- predict(health_2, newdata = health_reg_df)
-# 
-# # Look at first few observed vs predicted values
-health_reg_df %>% dplyr::select(hhid, cr_hn_gnhlth_REV, predicted_gn_health)
 
 
+####Now create the same model for General Self Rated Health (SRH)
+#Must use ordinal logistic regression
+health_reg_df<- reduced_df %>%
+  dplyr::select(hhid, cr_hn_gnhlth_REV, hh_cs_youngcoh, list_crgender,
+                nationality_collapsed, cr_cs_location) %>%
+  bind_cols(factor_scores_df) %>%
+  drop_na()
 
-
-###Looking into Over and Under predicted CYRM:
-quantile(reg_df$resids, c(0.05, 0.95))
-over_pred_cyrm_hhid<- reg_df %>% filter(resids<= -10.21896) %>% pull(hhid)
-under_pred_cyrm_hhid<- reg_df %>% filter(resids>= 7.79411) %>% pull(hhid)
-over_pred_cyrm<-reduced_df %>% filter(hhid %in% over_pred_cyrm_hhid)
-under_pred_cyrm<-reduced_df %>% filter(hhid %in% under_pred_cyrm_hhid)
-
-#no differences in gender:
-table(under_pred_cyrm$list_crgender, useNA="ifany")
-table(over_pred_cyrm$list_crgender, useNA="ifany")
-
-#Appears that Younger cohort has lower predicted Resilience and vice versa
-table(under_pred_cyrm$hh_cs_youngcoh, useNA="ifany")
-table(over_pred_cyrm$hh_cs_youngcoh, useNA="ifany")
-#confirm with fisher's exact test:
-contingency_tab<- cbind(c(146,48), c(81,113))
-fisher.test(contingency_tab)
-
-#no differences between nationalities;roughly expected distribution:
-table(under_pred_cyrm$cr_cs_nationality, useNA="ifany")
-table(over_pred_cyrm$cr_cs_nationality, useNA="ifany")
-
-#no differences in location/living situation:
-table(under_pred_cyrm$cr_cs_location, useNA="ifany")
-table(over_pred_cyrm$cr_cs_location, useNA="ifany")
-
-
-
-####SRH model- confusion matrix:
-
-predicted_correct_SRH<- health_reg_df %>% 
-  filter(cr_hn_gnhlth_REV==predicted_gn_health)
-predicted_correct_SRH %>% filter(cr_hn_gnhlth_REV %in% c(1,2,3)) %>% nrow()
-predicted_correct_SRH %>% filter(cr_hn_gnhlth_REV %in% c(4,5)) %>% nrow()
-
-predicted_incorrect_SRH<- health_reg_df %>% 
-  filter(cr_hn_gnhlth_REV!=predicted_gn_health)
-predicted_incorrect_SRH %>% filter(cr_hn_gnhlth_REV %in% c(1,2,3)) %>% nrow()
-predicted_incorrect_SRH %>% filter(cr_hn_gnhlth_REV %in% c(4,5)) %>% nrow()
-
-
-
-###New attempt for health model:
 ###SRH collapsing categories 1,2,3:
 health_reg_df$SRH_test_col<- ifelse(health_reg_df$cr_hn_gnhlth_REV %in% c(1,2,3), 3,
                                     health_reg_df$cr_hn_gnhlth_REV )
@@ -346,56 +272,59 @@ health_reg_df$SRH_test_col<- ifelse(health_reg_df$SRH_test_col==3,1,
                                            3))
 
 #create weights vector based on frequencies of each category
-tab<-1/table(health_reg_df$SRH_test_col)
+tab<-1/table(health_reg_df$SRH_test_col) #this didn't work
 #playing around with weights
 weights_vec<-ifelse(health_reg_df$SRH_test_col==1, 0.44,
                     ifelse(health_reg_df$SRH_test_col==2, 0.28,
                            0.28 ))
-
+#NEW SRH model:
 health_3<- polr(as.factor(SRH_test_col)~ socialself + socialworld + 
-                  generalthreat + generalsafety + as.factor(hh_cs_youngcoh)
-                + as.factor(list_crgender) 
-                #+as.factor(cr_cs_nationality)
-                #+as.factor(cr_cs_location)
-                ,weights=weights_vec ,Hess=T
-                , data=health_reg_df)
-summary(health_3)
-
-health_reg_df$predicted_gn_health <- predict(health_3, newdata = health_reg_df)
-# 
-# # Look at first few observed vs predicted values
-health_reg_df %>% dplyr::select(hhid, SRH_test_col, predicted_gn_health)
-#look at density:
-ggplot(health_reg_df)+
-  geom_bar(aes(x=as.numeric(SRH_test_col)), fill="red", alpha=0.3)+
-  geom_bar(aes(x=as.numeric(predicted_gn_health)), fill="blue", alpha=0.3)+
-  labs(title = "Actual vs. Predicted SRH Density", x = "SRH", y = "Frequency")
-
-
-#Can we use weights with all 5 SRH categories??
-weights_vec<- 
-  ifelse(health_reg_df$cr_hn_gnhlth_REV==1,0.30,
-         ifelse(health_reg_df$cr_hn_gnhlth_REV==2,0.30,
-                ifelse(health_reg_df$cr_hn_gnhlth_REV==3,0.20,
-                       ifelse(health_reg_df$cr_hn_gnhlth_REV==4,0.10,
-                              0.10))))
-health_4<- polr(as.factor(cr_hn_gnhlth_REV)~ socialself + socialworld + 
                   generalthreat + generalsafety + as.factor(hh_cs_youngcoh)
                 + as.factor(list_crgender) 
                 +as.factor(nationality_collapsed)
                 +as.factor(cr_cs_location)
                 ,weights=weights_vec ,Hess=T
                 , data=health_reg_df)
-health_reg_df$predicted_gn_health <- predict(health_4, newdata = health_reg_df)
+summary(health_3)
+confint(health_3)
+
+#Manually compute CIs for cutoff values (cannot extract)
+health_3_output<- coef(summary(health_3))
+lower<-numeric(2)
+upper<-numeric(2)
+cutoff_CI<- data.frame(lower,upper)
+for (i in 1:2){
+  cutoff_CI$lower[i]<- 
+    health_3_output[i+10,1] - 1.96*health_3_output[i+10,2]
+  cutoff_CI$upper[i]<- 
+    health_3_output[i+10,1] + 1.96*health_3_output[i+10,2]
+}
+cutoff_CI
+
+#Predicted values
+health_reg_df$predicted_gn_health <- predict(health_3, newdata = health_reg_df)
+# Look at first few observed vs predicted values
+health_reg_df %>% dplyr::select(hhid, SRH_test_col, predicted_gn_health)
 #look at density:
 ggplot(health_reg_df)+
-  geom_bar(aes(x=as.numeric(cr_hn_gnhlth_REV)), fill="red", alpha=0.3)+
+  geom_bar(aes(x=as.numeric(SRH_test_col)), fill="red", alpha=0.3)+
   geom_bar(aes(x=as.numeric(predicted_gn_health)), fill="blue", alpha=0.3)+
   labs(title = "Actual vs. Predicted SRH Density", x = "SRH", y = "Frequency")
+#Pseudo R^2 values for SRH new model #3:
+DescTools::PseudoR2(health_3, which = "all")
 
-table(health_reg_df$predicted_gn_health, useNA="ifany")
-table(health_reg_df$cr_hn_gnhlth_REV, useNA="ifany")
 
+####SRH model- confusion matrix:
+
+predicted_correct_SRH<- health_reg_df %>% 
+  filter(SRH_test_col==predicted_gn_health)
+predicted_correct_SRH %>% filter(SRH_test_col %in% c(1)) %>% nrow()
+predicted_correct_SRH %>% filter(SRH_test_col %in% c(2,3)) %>% nrow()
+
+predicted_incorrect_SRH<- health_reg_df %>% 
+  filter(SRH_test_col!=predicted_gn_health)
+predicted_incorrect_SRH %>% filter(SRH_test_col %in% c(1)) %>% nrow()
+predicted_incorrect_SRH %>% filter(SRH_test_col %in% c(2,3)) %>% nrow()
 
 
 
@@ -419,8 +348,4 @@ confint(ghq_lm)
 
 #Predicting GHQ with our model:
 ghq_reg_df$predicted_GHQ <- predict(ghq_lm, newdata = ghq_reg_df)
-#Predicted vs Actual GHQ Densities:
-ggplot(data=ghq_reg_df)+
-  geom_density(aes(x=ghq_SUM, fill="red", alpha=0.3))+
-  geom_density(aes(x=predicted_GHQ, fill="blue", alpha=0.3))+
-  labs(title = "Actual vs. Predicted GHQ Density Plot", x = "GHQ", y = "Density") 
+

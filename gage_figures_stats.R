@@ -84,7 +84,7 @@ ggplot(data = health_reg_df,
 
 #residual plots for health model:
 health_reg_df$resids<- 
-  as.numeric(health_reg_df$cr_hn_gnhlth_REV)-
+  as.numeric(health_reg_df$SRH_test_col)-
   as.numeric(health_reg_df$predicted_gn_health)
 
 ggplot(health_reg_df, aes(x =predicted_gn_health,y =resids)) +
@@ -112,10 +112,28 @@ ggplot(health_reg_df)+
 
 
 
+###GHQ plots:
+#Predicted vs Actual GHQ Densities:
+ggplot(data=ghq_reg_df)+
+  geom_density(aes(x=ghq_SUM, fill="red", alpha=0.3))+
+  geom_density(aes(x=predicted_GHQ, fill="blue", alpha=0.3))+
+  labs(title = "Actual vs. Predicted GHQ Density Plot", x = "GHQ", y = "Density") +
+  theme(legend.position= "bottom")
 
+##Residual Plot for GHQ:
+ghq_reg_df$resids<- resid(ghq_lm)
+ggplot(ghq_reg_df, aes(x =predicted_GHQ, y = resids)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "GHQ Residual Plot", x = "Fitted Values", y = "Residuals") +
+  theme_minimal()
 
-
-h<- reduced_df %>% filter(hh_cs_youngcoh==1) 
-hist(h$cr_rc_cyrm)
-old<-reduced_df %>% filter(hh_cs_youngcoh==2) 
-hist(old$cr_rc_cyrm)
+#actual vs predicted plot for GHQ:
+ggplot(data = ghq_reg_df,
+       aes(x = ghq_SUM, y = predicted_GHQ)) +
+  geom_point() +
+  geom_abline(intercept = 0, slope = 1, color = "red") +
+  labs(title = "Predicted vs Actual GHQ-12",
+       x = "Actual GHQ-12",
+       y = "Predicted GHQ-12") +
+  theme_minimal()
