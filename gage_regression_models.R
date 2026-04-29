@@ -231,8 +231,6 @@ names(new_scores) = c("socialself", "socialworld",  "generalthreat",    "general
 
 
 predict(cyrm_lm, new = new_scores)
-#now do same for health
-predict(health_2, new=new_scores)
 
 
 # Generate predictions for the existing sample to examine goodness of fit #
@@ -255,7 +253,7 @@ reg_df %>% dplyr::select(hhid, cr_rc_cyrm, predicted_cr_rc_cyrm)
 
 
 
-####Now create the same model for General Self Rated Health (SRH)
+####Now create a model for General Self Rated Health (SRH)
 #Must use ordinal logistic regression
 health_reg_df<- reduced_df %>%
   dplyr::select(hhid, cr_hn_gnhlth_REV, hh_cs_youngcoh, list_crgender,
@@ -263,7 +261,7 @@ health_reg_df<- reduced_df %>%
   bind_cols(factor_scores_df) %>%
   drop_na()
 
-###SRH collapsing categories 1,2,3:
+###SRH collapsing categories 1,2 and 3 due to very low observations:
 health_reg_df$SRH_test_col<- ifelse(health_reg_df$cr_hn_gnhlth_REV %in% c(1,2,3), 3,
                                     health_reg_df$cr_hn_gnhlth_REV )
 
@@ -271,8 +269,6 @@ health_reg_df$SRH_test_col<- ifelse(health_reg_df$SRH_test_col==3,1,
                                     ifelse(health_reg_df$SRH_test_col==4,2,
                                            3))
 
-#create weights vector based on frequencies of each category
-tab<-1/table(health_reg_df$SRH_test_col) #this didn't work
 #playing around with weights
 weights_vec<-ifelse(health_reg_df$SRH_test_col==1, 0.44,
                     ifelse(health_reg_df$SRH_test_col==2, 0.28,

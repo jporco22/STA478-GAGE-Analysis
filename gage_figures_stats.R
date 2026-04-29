@@ -70,19 +70,9 @@ ggplot(data=reg_df)+
 
 
 
-#Predicted vs Actual- Health:
-#need to create scatter plot with proportionally sized dots
-ggplot(data = health_reg_df,
-       aes(x = cr_hn_gnhlth_REV, y = predicted_gn_health)) +
-  geom_count() +
-  geom_abline(intercept = 0, slope = 1, color = "red") +
-  coord_cartesian(xlim = c(0, 5), ylim = c(0, 5))+
-  labs(title = "Predicted vs Actual SRH",
-       x = "Actual SRH",
-       y = "Predicted SRH") +
-  theme_minimal()
 
-#residual plots for health model:
+
+#residual plots for SRH model:
 health_reg_df$resids<- 
   as.numeric(health_reg_df$SRH_test_col)-
   as.numeric(health_reg_df$predicted_gn_health)
@@ -96,13 +86,6 @@ ggplot(health_reg_df, aes(x =predicted_gn_health,y =resids)) +
 ggplot(data=health_reg_df, aes(x=resids))+
   geom_bar()+
   labs(title = "SRH Residual Plot", x = "Residuals", y = "Count")
-
-#Note, our model does not predict any 4100 indivduals to be in categories 1 or 2
-table(health_reg_df$cr_hn_gnhlth_REV)
-table(health_reg_df$predicted_gn_health)
-h<-health_reg_df %>% filter(cr_hn_gnhlth_REV == 1) %>% 
-  dplyr::select(cr_hn_gnhlth_REV, predicted_gn_health)
-print(h, n=700)
 
 #overlayed density for SRH
 ggplot(health_reg_df)+
