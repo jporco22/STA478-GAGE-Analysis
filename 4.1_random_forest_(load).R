@@ -1,8 +1,15 @@
+library(parallel)
+library(parallelly)
+library(ranger)
+library(dplyr)
+library(tibble)
+
+
 # ============================================================
 # LOAD SAVED RANDOM FOREST MODEL
 # ============================================================
 
-rf_saved_object <- readRDS("rf_best_model_saved.rds")
+rf_saved_object <- readRDS("~/Desktop/GAGE-Analysis/rf_best_model_saved.rds")
 
 rf_best_model <- rf_saved_object$model
 rf_best_threshold <- rf_saved_object$threshold
@@ -11,6 +18,30 @@ predictor_vars <- rf_saved_object$predictor_vars
 # ============================================================
 # PREPARE DATA FOR PREDICTION
 # ============================================================
+
+health_model_df <- health_reg_df %>%
+  mutate(
+    SRH_binary_num = case_when(
+      SRH_binary == 0 ~ 0,
+      SRH_binary == 1 ~ 1,
+      TRUE ~ NA_real_
+    ),
+    SRH_binary_fac = factor(
+      ifelse(SRH_binary_num == 1, "one", "zero"),
+      levels = c("zero", "one")
+    ),
+    hh_cs_youngcoh = as.factor(hh_cs_youngcoh),
+    list_crgender = as.factor(list_crgender),
+    nationality_collapsed = as.factor(nationality_collapsed),
+    cr_cs_location = as.factor(cr_cs_location)
+  ) %>%
+  dplyr::select(
+    SRH_binary_num,
+    SRH_binary_fac,
+    all_of(predictor_vars)
+  ) %>%
+  na.omit()
+
 
 health_model_df$SRH_binary_num <- as.numeric(health_model_df$SRH_binary_num)
 

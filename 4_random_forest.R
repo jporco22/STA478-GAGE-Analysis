@@ -12,6 +12,11 @@ library(ranger)
 library(dplyr)
 library(tibble)
 
+predictor_vars = c("socialself", "socialworld", "generalthreat",
+                   "generalsafety", "hh_cs_youngcoh", "list_crgender", 
+                   "nationality_collapsed", "cr_cs_location")
+  
+
 # ============================================================
 # 1. USER SETTINGS
 # ============================================================

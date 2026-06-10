@@ -7,6 +7,9 @@ library(future)
 library(future.apply)
 library(parallelly)
 library(progressr)
+library(knitr)
+library(kableExtra)
+
 
 
 # source("C:/Users/jporc/STA478-GAGE-Analysis/gage_data_cleaning.R")
@@ -266,15 +269,15 @@ health_reg_df <- health_reg_df %>%
 
 
 # playing around with weights (Julia)
-weights_vec <- ifelse(health_reg_df$SRH_collapsed==1, 0.44,
-                    ifelse(health_reg_df$SRH_collapsed==2, 0.28,
-                           0.28 ))
+# weights_vec <- ifelse(health_reg_df$SRH_collapsed==1, 0.44,
+#                     ifelse(health_reg_df$SRH_collapsed==2, 0.28,
+#                            0.28 ))
 
 
 # Weights from grid search algorithm
-# weights_vec <- ifelse(health_reg_df$SRH_collapsed==1, 4.7,
-#                     ifelse(health_reg_df$SRH_collapsed==2, 2.4,
-#                            1.9 ))
+weights_vec <- ifelse(health_reg_df$SRH_collapsed==1, 4.7,
+                    ifelse(health_reg_df$SRH_collapsed==2, 2.4,
+                           1.9 ))
 
 
 
@@ -318,14 +321,91 @@ cm <- table(
   Predicted = predicted_score
 )
 
-# cm
-prop.table(cm, margin = 1)
 
+round(prop.table(cm, margin = 1)*100, 2)
+cm
 
 
 
 summary(health_3)
 confint(health_3)
+
+
+
+
+
+
+# ============================================================
+# ACCURACY MEASURES FOR WEIGHTED ORDINAL LOGISTIC MODEL
+# ============================================================
+
+# Predicted class from the polr model
+ord_predicted_class <- predict(health_3, type = "class")
+
+# Observed outcome from the model frame
+ord_observed_class <- model.response(model.frame(health_3))
+
+# Model weights
+ord_weights <- model.weights(model.frame(health_3))
+
+# Weighted confusion matrix
+ord_conf_counts <- xtabs(
+  ord_weights ~ ord_observed_class + ord_predicted_class
+)
+
+# Row proportions: correct prediction within each observed category
+ord_conf_row_props <- prop.table(ord_conf_counts, margin = 1)
+
+# Overall weighted accuracy
+overall_accuracy <- weighted.mean(
+  ord_observed_class == ord_predicted_class,
+  ord_weights
+)
+
+# Accuracy for each observed category
+class_accuracy <- diag(ord_conf_row_props)
+
+# Balanced accuracy across the three categories
+balanced_accuracy <- mean(class_accuracy)
+
+# Minimum class accuracy
+min_class_accuracy <- min(class_accuracy)
+
+# Ordinal thresholds/cutpoints from polr
+thresholds_used <- paste(
+  paste0(names(health_3$zeta), " = ", round(as.numeric(health_3$zeta), 3)),
+  collapse = "; "
+)
+
+cat("\nOverall accuracy:", round(100 * overall_accuracy, 2), "%\n")
+
+for (i in seq_along(class_accuracy)) {
+  cat(
+    "Correct prediction of observed",
+    names(class_accuracy)[i],
+    ":",
+    round(100 * class_accuracy[i], 2),
+    "%\n"
+  )
+}
+
+cat("Balanced accuracy:", round(100 * balanced_accuracy, 2), "%\n")
+cat("Minimum class accuracy:", round(100 * min_class_accuracy, 2), "%\n")
+cat("Thresholds used:", thresholds_used, "\n")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #Manually compute CIs for cutoff values (cannot extract)
 health_3_output<- coef(summary(health_3))
@@ -407,7 +487,7 @@ ghq_reg_df$predicted_GHQ <- predict(ghq_lm, newdata = ghq_reg_df)
 
 
 
-
+# Attempted interaction model (not useful)
 health_3_interaction <- polr(
   as.factor(SRH_test_col) ~ 
     socialself + socialworld + generalthreat + generalsafety +
@@ -450,7 +530,7 @@ table(
 ########################################
 ########################################
 
-## Logistic regression model
+## BINARY Logistic regression model
 
 health_reg_df <- health_reg_df %>%
                     mutate(
@@ -482,6 +562,12 @@ health_logistic <- glm(as.numeric(SRH_binary) ~
                     data = health_reg_df)
 
 
+
+
+summary(health_logistic)
+confint(health_logistic)
+
+
 health_reg_df$SRH_binary
 health_logistic$fitted.values
 
@@ -495,7 +581,8 @@ conf_counts <- table(
 # Overall proportions
 # round(prop.table(conf_counts), 3)
 # Row proportions
-round(prop.table(conf_counts, margin = 1), 3)
+conf_counts
+round(prop.table(conf_counts, margin = 1)*100, 2)
 
 
 
@@ -542,6 +629,70 @@ round(prop.table(conf_counts, margin = 1), 3)
 # )
 # 
 # round(prop.table(conf_counts_weighted, margin = 1), 3)
+
+
+
+
+
+
+
+
+# ===========================================
+# ACCURACY MEASURES FOR BINARY LOGISTIC MODEL
+# ===========================================
+
+# Predicted probabilities from the logistic regression model
+logit_predicted_prob <- predict(health_logistic, type = "response")
+
+# Threshold for converting predicted probabilities into classes
+logit_threshold <- 0.50
+
+# Predicted class
+logit_predicted_class <- ifelse(logit_predicted_prob >= logit_threshold, 1, 0)
+
+# Observed class from the model frame
+logit_observed_class <- model.response(model.frame(health_logistic))
+
+# If observed classes are coded as 1/2, convert them to 0/1
+if (all(sort(unique(logit_observed_class)) == c(1, 2))) {
+  logit_observed_class <- logit_observed_class - 1
+}
+
+# Confusion matrix
+logit_conf_counts <- table(
+  Observed = factor(logit_observed_class, levels = c(0, 1)),
+  Predicted = factor(logit_predicted_class, levels = c(0, 1))
+)
+
+# Row proportions: correct prediction within each observed category
+logit_conf_row_props <- prop.table(logit_conf_counts, margin = 1)
+
+# Overall accuracy
+overall_accuracy <- mean(
+  logit_observed_class == logit_predicted_class
+)
+
+# Accuracy for each observed category
+class_0_accuracy <- logit_conf_row_props["0", "0"]
+class_1_accuracy <- logit_conf_row_props["1", "1"]
+
+# Balanced accuracy
+balanced_accuracy <- mean(
+  c(class_0_accuracy, class_1_accuracy)
+)
+
+# Minimum class accuracy
+min_class_accuracy <- min(
+  class_0_accuracy,
+  class_1_accuracy
+)
+
+cat("\nOverall accuracy:", round(100 * overall_accuracy, 2), "%\n")
+cat("Correct prediction of observed 0's:", round(100 * class_0_accuracy, 2), "%\n")
+cat("Correct prediction of observed 1's:", round(100 * class_1_accuracy, 2), "%\n")
+cat("Balanced accuracy:", round(100 * balanced_accuracy, 2), "%\n")
+cat("Minimum class accuracy:", round(100 * min_class_accuracy, 2), "%\n")
+cat("Threshold used:", logit_threshold, "\n")
 
 
 
