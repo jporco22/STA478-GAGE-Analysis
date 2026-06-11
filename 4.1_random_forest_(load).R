@@ -132,6 +132,7 @@ min_class_accuracy <- min(
   class_1_accuracy
 )
 
+# Random Forest
 cat("\nOverall accuracy:", round(100 * overall_accuracy, 2), "%\n")
 cat("Correct prediction of observed 0's:", round(100 * class_0_accuracy, 2), "%\n")
 cat("Correct prediction of observed 1's:", round(100 * class_1_accuracy, 2), "%\n")
@@ -139,3 +140,14 @@ cat("Balanced accuracy:", round(100 * balanced_accuracy, 2), "%\n")
 cat("Minimum class accuracy:", round(100 * min_class_accuracy, 2), "%\n")
 cat("Threshold used:", rf_best_threshold, "\n")
 
+
+
+
+
+rf_best_importance <- tibble(
+  variable = names(rf_best_model$variable.importance),
+  importance = as.numeric(rf_best_model$variable.importance)
+) %>%
+  arrange(desc(importance))
+
+rf_best_importance

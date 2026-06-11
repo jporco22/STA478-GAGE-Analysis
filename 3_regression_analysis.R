@@ -339,59 +339,28 @@ confint(health_3)
 # ACCURACY MEASURES FOR WEIGHTED ORDINAL LOGISTIC MODEL
 # ============================================================
 
-# Predicted class from the polr model
-ord_predicted_class <- predict(health_3, type = "class")
+ordinal_observed <- health_reg_df$SRH_collapsed
 
-# Observed outcome from the model frame
-ord_observed_class <- model.response(model.frame(health_3))
-
-# Model weights
-ord_weights <- model.weights(model.frame(health_3))
-
-# Weighted confusion matrix
-ord_conf_counts <- xtabs(
-  ord_weights ~ ord_observed_class + ord_predicted_class
+ordinal_predicted <- predict(
+  health_3,
+  type = "class"
 )
 
-# Row proportions: correct prediction within each observed category
-ord_conf_row_props <- prop.table(ord_conf_counts, margin = 1)
-
-# Overall weighted accuracy
-overall_accuracy <- weighted.mean(
-  ord_observed_class == ord_predicted_class,
-  ord_weights
+ordinal_results <- model_accuracy_summary(
+  observed = ordinal_observed,
+  predicted = ordinal_predicted
 )
 
-# Accuracy for each observed category
-class_accuracy <- diag(ord_conf_row_props)
+ordinal_results$confusion_counts
+ordinal_results$row_percentages
+ordinal_results$overall_accuracy
+ordinal_results$class_accuracy
 
-# Balanced accuracy across the three categories
-balanced_accuracy <- mean(class_accuracy)
 
-# Minimum class accuracy
-min_class_accuracy <- min(class_accuracy)
+# Ordinal model threshold/cutpoint values
 
-# Ordinal thresholds/cutpoints from polr
-thresholds_used <- paste(
-  paste0(names(health_3$zeta), " = ", round(as.numeric(health_3$zeta), 3)),
-  collapse = "; "
-)
-
-cat("\nOverall accuracy:", round(100 * overall_accuracy, 2), "%\n")
-
-for (i in seq_along(class_accuracy)) {
-  cat(
-    "Correct prediction of observed",
-    names(class_accuracy)[i],
-    ":",
-    round(100 * class_accuracy[i], 2),
-    "%\n"
-  )
-}
-
-cat("Balanced accuracy:", round(100 * balanced_accuracy, 2), "%\n")
-cat("Minimum class accuracy:", round(100 * min_class_accuracy, 2), "%\n")
-cat("Thresholds used:", thresholds_used, "\n")
+ordinal_cutpoints <- round(health_3$zeta, 3)
+ordinal_cutpoints
 
 
 
@@ -544,7 +513,7 @@ health_reg_df <- health_reg_df %>%
 
 
 
-# Unweighted
+# Un-weighted Binary Logistic regression model
 
 health_logistic <- glm(as.numeric(SRH_binary) ~ 
                          
@@ -641,60 +610,147 @@ round(prop.table(conf_counts, margin = 1)*100, 2)
 # ACCURACY MEASURES FOR BINARY LOGISTIC MODEL
 # ===========================================
 
-# Predicted probabilities from the logistic regression model
-logit_predicted_prob <- predict(health_logistic, type = "response")
+# -----------------------------
+# Set classification threshold
+# -----------------------------
 
-# Threshold for converting predicted probabilities into classes
-logit_threshold <- 0.50
+binary_threshold <- 0.80   # change to 0.50 if that is the threshold used in your table
 
-# Predicted class
-logit_predicted_class <- ifelse(logit_predicted_prob >= logit_threshold, 1, 0)
 
-# Observed class from the model frame
-logit_observed_class <- model.response(model.frame(health_logistic))
+# -----------------------------
+# Helper function
+# -----------------------------
 
-# If observed classes are coded as 1/2, convert them to 0/1
-if (all(sort(unique(logit_observed_class)) == c(1, 2))) {
-  logit_observed_class <- logit_observed_class - 1
+model_accuracy_summary <- function(observed, predicted) {
+  
+  cm <- table(
+    Observed = observed,
+    Predicted = predicted
+  )
+  
+  row_percent <- round(prop.table(cm, margin = 1) * 100, 2)
+  
+  overall_accuracy <- round(
+    sum(diag(cm)) / sum(cm) * 100,
+    2
+  )
+  
+  class_accuracy <- round(diag(row_percent), 2)
+  
+  list(
+    confusion_counts = cm,
+    row_percentages = row_percent,
+    overall_accuracy = overall_accuracy,
+    class_accuracy = class_accuracy
+  )
 }
 
-# Confusion matrix
-logit_conf_counts <- table(
-  Observed = factor(logit_observed_class, levels = c(0, 1)),
-  Predicted = factor(logit_predicted_class, levels = c(0, 1))
+
+# ============================================================
+# 1. Binary logistic regression model
+# ============================================================
+
+binary_observed <- health_reg_df$SRH_binary
+
+binary_predicted <- ifelse(
+  health_logistic$fitted.values >= binary_threshold,
+  1,
+  0
 )
 
-# Row proportions: correct prediction within each observed category
-logit_conf_row_props <- prop.table(logit_conf_counts, margin = 1)
-
-# Overall accuracy
-overall_accuracy <- mean(
-  logit_observed_class == logit_predicted_class
+binary_results <- model_accuracy_summary(
+  observed = binary_observed,
+  predicted = binary_predicted
 )
 
-# Accuracy for each observed category
-class_0_accuracy <- logit_conf_row_props["0", "0"]
-class_1_accuracy <- logit_conf_row_props["1", "1"]
+binary_results$confusion_counts
+binary_results$row_percentages
+binary_results$overall_accuracy
+binary_results$class_accuracy
 
-# Balanced accuracy
-balanced_accuracy <- mean(
-  c(class_0_accuracy, class_1_accuracy)
+
+# Binary model values for Table 2
+
+binary_class_0_accuracy <- binary_results$class_accuracy["0"]
+binary_class_1_accuracy <- binary_results$class_accuracy["1"]
+
+binary_balanced_accuracy <- round(
+  mean(c(binary_class_0_accuracy, binary_class_1_accuracy)),
+  2
 )
 
-# Minimum class accuracy
-min_class_accuracy <- min(
-  class_0_accuracy,
-  class_1_accuracy
+binary_min_class_accuracy <- round(
+  min(binary_class_0_accuracy, binary_class_1_accuracy),
+  2
 )
 
-cat("\nOverall accuracy:", round(100 * overall_accuracy, 2), "%\n")
-cat("Correct prediction of observed 0's:", round(100 * class_0_accuracy, 2), "%\n")
-cat("Correct prediction of observed 1's:", round(100 * class_1_accuracy, 2), "%\n")
-cat("Balanced accuracy:", round(100 * balanced_accuracy, 2), "%\n")
-cat("Minimum class accuracy:", round(100 * min_class_accuracy, 2), "%\n")
-cat("Threshold used:", logit_threshold, "\n")
+binary_table_2 <- data.frame(
+  Model = "Binary logistic regression",
+  Overall_accuracy = binary_results$overall_accuracy,
+  Correct_Very_Poor_Poor_Fair = binary_class_0_accuracy,
+  Correct_Good_Very_Good = binary_class_1_accuracy,
+  Balanced_accuracy = binary_balanced_accuracy,
+  Min_class_accuracy = binary_min_class_accuracy,
+  Threshold = binary_threshold
+)
+
+binary_table_2
 
 
 
+
+
+
+
+
+
+
+
+
+# ============================================================
+# Table 1: Comparison of both models
+# ============================================================
+
+table_1 <- data.frame(
+  Model = c(
+    "Ordinal logistic regression",
+    "Binary logistic regression"
+  ),
+  
+  Outcome_categories = c(
+    "Very Poor/Poor/Fair; Good; Very Good",
+    "Very Poor/Poor/Fair; Good or Very Good"
+  ),
+  
+  Overall_accuracy = c(
+    ordinal_results$overall_accuracy,
+    binary_results$overall_accuracy
+  ),
+  
+  Correct_prediction_each_category = c(
+    paste(
+      names(ordinal_results$class_accuracy),
+      ordinal_results$class_accuracy,
+      sep = ": ",
+      collapse = "; "
+    ),
+    paste(
+      names(binary_results$class_accuracy),
+      binary_results$class_accuracy,
+      sep = ": ",
+      collapse = "; "
+    )
+  ),
+  
+  Thresholds_or_classification_rule = c(
+    paste0(
+      "Predicted class from polr; case weights = 4.7, 2.4, 1.9; cutpoints = ",
+      paste(names(ordinal_cutpoints), ordinal_cutpoints, sep = ": ", collapse = "; ")
+    ),
+    paste0("Predicted probability threshold = ", binary_threshold)
+  )
+)
+
+table_1
 
 
