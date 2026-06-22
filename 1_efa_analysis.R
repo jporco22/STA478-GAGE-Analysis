@@ -1,3 +1,6 @@
+library(lavaan)
+library(dplyr)
+
 ###GAGE Project- EFA Models
 ### By: Julia Porco
 
@@ -48,8 +51,8 @@ efa_test<- efa(data = reduced_df,
                    'cr_si_partsport',
                    'cr_vio_safe_friend',
                    'cr_vio_safe_neighbor',
-                   'cr_vio_safe_relative','
-                   cr_vio_safe_work',  
+                   'cr_vio_safe_relative',
+                   'cr_vio_safe_work',  
                    'cr_vi_peer_times1',
                    'cr_vi_peer_times2',
                    'cr_vi_peer_times3',
@@ -83,3 +86,23 @@ summary(efa_test, fit.measures = T)
 
 
 ###Adjust CFA model based on standardized loadings here.
+
+## Obtaining standardized factors
+
+standardizedSolution(efa_test) %>%
+  filter(op == "=~") %>%
+  group_by(lhs) %>%
+  summarise(
+    n_indicators = n(),
+    minimum_loading = min(est.std, na.rm = TRUE),
+    maximum_loading = max(est.std, na.rm = TRUE),
+    loading_range = sprintf(
+      "%.2f–%.2f",
+      minimum_loading,
+      maximum_loading
+    ),
+    .groups = "drop"
+  )
+
+
+

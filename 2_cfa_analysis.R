@@ -1,3 +1,7 @@
+library(lavaan)
+library(dplyr)
+
+
 ###GAGE Project- CFA Models
 ### By: Julia Porco
 
@@ -73,6 +77,43 @@ lavInspect(tenth_cfa_fit, what="std")$lambda
 
 
 
+
+## Obtaining standardized factors
+
+standardizedSolution(tenth_cfa_fit) %>%
+  filter(op == "=~") %>%
+  group_by(lhs) %>%
+  summarise(
+    n_indicators = n(),
+    minimum_loading = min(est.std, na.rm = TRUE),
+    maximum_loading = max(est.std, na.rm = TRUE),
+    loading_range = sprintf(
+      "%.2f–%.2f",
+      minimum_loading,
+      maximum_loading
+    ),
+    .groups = "drop"
+  ) %>%
+  arrange(match(
+    lhs,
+    c("socialself", "socialworld", "generalsafety", "generalthreat")
+  ))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #For paper: "Model A/ Initial Model"- all variables included. 
 model_a_cfa <- "socialself = ~ cr_hn_scale + 
                                 cr_mva_opinfriend + 
@@ -106,7 +147,7 @@ model_a_cfa <- "socialself = ~ cr_hn_scale +
                               cr_vio_interargue +
                               cr_vio_vioprivematt
                               
-             socialsafetythreat = ~ cr_si_togetherness +
+            socialsafetythreat = ~ cr_si_togetherness +
                               cr_vi_peer_times1 +
                               cr_vi_peer_times2 + 
                               cr_vi_peer_times3 +
@@ -159,3 +200,10 @@ lavInspect(model_a_cfa_fit, what="std")$lambda
 
 # summary(model_b_cfa_fit, fit.measures=T)
 # lavInspect(model_b_cfa_fit, what="std")$lambda
+
+
+
+
+
+
+

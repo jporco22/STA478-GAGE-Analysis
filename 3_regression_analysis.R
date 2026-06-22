@@ -13,7 +13,7 @@ library(kableExtra)
 
 
 # source("C:/Users/jporc/STA478-GAGE-Analysis/gage_data_cleaning.R")
-# source("~/Desktop/STA478-GAGE-Analysis/gage_data_cleaning.R")
+# source("~/Desktop/STA478-GAGE-Analysis/0_cleaning.R")
 
 # Run GAGE
 # REQUIRED to get data object reduced_df used in model construction

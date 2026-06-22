@@ -37,6 +37,46 @@ print(ordinal_rf_best_parameters)
 #    script that created the saved model.
 # ============================================================
 
+# health_model_df <- health_reg_df %>%
+#   mutate(
+#     SRH_collapsed_num = case_when(
+#       cr_hn_gnhlth_REV %in% c(1, 2, 3) ~ 1,
+#       cr_hn_gnhlth_REV == 4 ~ 2,
+#       cr_hn_gnhlth_REV == 5 ~ 3,
+#       TRUE ~ NA_real_
+#     ),
+#     SRH_collapsed_rf = factor(
+#       case_when(
+#         SRH_collapsed_num == 1 ~ "PoorFair",
+#         SRH_collapsed_num == 2 ~ "Good",
+#         SRH_collapsed_num == 3 ~ "VeryGood",
+#         TRUE ~ NA_character_
+#       ),
+#       levels = c("PoorFair", "Good", "VeryGood"),
+#       ordered = TRUE
+#     ),
+#     hh_cs_youngcoh = as.factor(hh_cs_youngcoh),
+#     list_crgender = as.factor(list_crgender),
+#     nationality_collapsed = as.factor(nationality_collapsed),
+#     cr_cs_location = as.factor(cr_cs_location)
+#   ) %>%
+#   dplyr::select(
+#     SRH_collapsed_num,
+#     SRH_collapsed_rf,
+#     dplyr::all_of(predictor_vars)
+#   ) %>%
+#   na.omit()
+# 
+# prediction_df <- health_model_df %>%
+#   dplyr::select(dplyr::all_of(predictor_vars))
+
+factor_vars <- c(
+  "hh_cs_youngcoh",
+  "list_crgender",
+  "nationality_collapsed",
+  "cr_cs_location"
+)
+
 health_model_df <- health_reg_df %>%
   mutate(
     SRH_collapsed_num = case_when(
@@ -45,6 +85,7 @@ health_model_df <- health_reg_df %>%
       cr_hn_gnhlth_REV == 5 ~ 3,
       TRUE ~ NA_real_
     ),
+    
     SRH_collapsed_rf = factor(
       case_when(
         SRH_collapsed_num == 1 ~ "PoorFair",
@@ -55,10 +96,11 @@ health_model_df <- health_reg_df %>%
       levels = c("PoorFair", "Good", "VeryGood"),
       ordered = TRUE
     ),
-    hh_cs_youngcoh = as.factor(hh_cs_youngcoh),
-    list_crgender = as.factor(list_crgender),
-    nationality_collapsed = as.factor(nationality_collapsed),
-    cr_cs_location = as.factor(cr_cs_location)
+    
+    across(
+      all_of(factor_vars),
+      ~ haven::as_factor(.x)
+    )
   ) %>%
   dplyr::select(
     SRH_collapsed_num,
@@ -67,8 +109,6 @@ health_model_df <- health_reg_df %>%
   ) %>%
   na.omit()
 
-prediction_df <- health_model_df %>%
-  dplyr::select(dplyr::all_of(predictor_vars))
 
 # ============================================================
 # 3. PREDICT CLASS PROBABILITIES
