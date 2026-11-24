@@ -7,9 +7,12 @@ library(haven)
 library(lavaan)
 library(MASS)
 #read core respondent data
-gage_baseline18 <- read_dta("C:/Users/jporc/OneDrive/Desktop/sta478/gage_jordan_baseline_cr_public_v1.dta")
+# gage_baseline18 <- read_dta("C:/Users/jporc/OneDrive/Desktop/sta478/gage_jordan_baseline_cr_public_v1.dta")
+gage_baseline18 <- read_dta("~/Desktop/GAGE-Analysis/Data/gage_jordan_baseline_cr_public_v1.dta")
+
 #read violence data 
-cr_violence_base<- read_dta("C:/Users/jporc/OneDrive/Desktop/sta478/GAGE_Jordan_Baseline_Data_CR_Violenceonly.dta")
+# cr_violence_base<- read_dta("C:/Users/jporc/OneDrive/Desktop/sta478/GAGE_Jordan_Baseline_Data_CR_Violenceonly.dta")
+cr_violence_base<- read_dta("~/Desktop/GAGE-Analysis/Data//GAGE_Jordan_Baseline_Data_CR_Violenceonly.dta")
 
 #Create a vector containing column labels for CR data:
 cr_labels <- sapply(gage_baseline18, function(x) attr(x, "label"))
